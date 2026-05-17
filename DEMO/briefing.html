@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI简报 - 钧衍智研OPC</title>
+    <style>
+        :root {
+            --gold: #C8963E;
+            --gold-light: #E8C56A;
+            --gold-dim: #6B5A30;
+            --blue: #1B4D7A;
+            --blue-light: #3A8BC7;
+            --orange: #E8712B;
+            --bg-deep: #060D18;
+            --bg-base: #0A1424;
+            --bg-card: #0F1D32;
+            --bg-hover: #152640;
+            --bg-raised: #1A3050;
+            --text-max: #FFFFFF;
+            --text-pri: #E0E6EC;
+            --text-sec: #8899AA;
+            --text-dim: #556677;
+            --text-hint: #334455;
+            --up: #22C55E;
+            --up-bg: rgba(34, 197, 94, 0.12);
+            --down: #EF4444;
+            --down-bg: rgba(239, 68, 68, 0.12);
+            --warn: #F59E0B;
+            --warn-bg: rgba(245, 158, 11, 0.12);
+            --line: rgba(200, 150, 62, 0.1);
+            --line-strong: rgba(200, 150, 62, 0.2);
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            --glow: 0 0 25px rgba(200, 150, 62, 0.15);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        a { text-decoration: none; color: inherit; }
+        a:hover { text-decoration: none; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-base);
+            color: var(--text-pri);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        .app { display: flex; min-height: 100vh; }
+
+        .sidebar {
+            width: 72px;
+            background: var(--bg-deep);
+            border-right: 1px solid var(--line);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+            position: fixed;
+            top: 0; left: 0; bottom: 0;
+            z-index: 100;
+        }
+
+        .sidebar-logo {
+            width: 44px; height: 44px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; font-weight: 700; color: var(--bg-deep);
+            margin-bottom: 32px;
+            box-shadow: var(--glow);
+        }
+
+        .sidebar-nav { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+
+        .nav-btn {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .nav-btn:hover { background: rgba(200, 150, 62, 0.1); }
+        .nav-btn.active { background: rgba(200, 150, 62, 0.15); }
+
+        .nav-btn.active::before {
+            content: '';
+            position: absolute;
+            left: -12px; top: 50%;
+            transform: translateY(-50%);
+            width: 3px; height: 24px;
+            background: var(--gold);
+            border-radius: 0 3px 3px 0;
+        }
+
+        .nav-icon { font-size: 20px; margin-bottom: 2px; }
+        .nav-label { font-size: 9px; color: var(--text-dim); }
+        .nav-btn.active .nav-label { color: var(--gold); }
+
+        .sidebar-user {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, var(--blue), var(--blue-light));
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 600;
+            cursor: pointer;
+        }
+
+        .main { flex: 1; margin-left: 72px; padding: 24px 32px; }
+
+        .header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 28px;
+        }
+
+        .header-left h1 { font-size: 22px; font-weight: 600; color: var(--text-max); margin-bottom: 4px; }
+        .header-left p { font-size: 12px; color: var(--text-dim); display: flex; align-items: center; gap: 8px; }
+
+        .live-dot {
+            width: 6px; height: 6px;
+            background: var(--up);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        .breadcrumb {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 12px; color: var(--text-dim);
+            margin-bottom: 20px;
+        }
+
+        .breadcrumb a { color: var(--text-dim); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--gold); }
+        .breadcrumb span { color: var(--text-hint); }
+
+        .panel {
+            background: var(--bg-card);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 22px;
+            margin-bottom: 24px;
+        }
+
+        .panel-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .panel-title { display: flex; align-items: center; gap: 10px; }
+
+        .panel-icon {
+            width: 32px; height: 32px;
+            background: rgba(200, 150, 62, 0.1);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+        }
+
+        .panel-title h3 { font-size: 15px; font-weight: 600; color: var(--text-pri); }
+
+        .ai-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 11px; color: var(--gold);
+            background: rgba(200, 150, 62, 0.1);
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+
+        .ai-badge::before {
+            content: '🤖';
+            font-size: 12px;
+        }
+
+        /* 今日简报主卡片 */
+        .today-report {
+            background: linear-gradient(135deg, var(--bg-card), rgba(200, 150, 62, 0.03));
+            border: 1px solid var(--line-strong);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .today-report::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--gold), var(--gold-light), var(--gold));
+        }
+
+        .report-meta {
+            display: flex; align-items: center; justify-content: space-between;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--line);
+            margin-bottom: 20px;
+        }
+
+        .report-time { font-size: 12px; color: var(--text-dim); }
+
+        /* 3件必知 */
+        .must-know { margin-bottom: 24px; }
+
+        .section-title {
+            font-size: 14px; font-weight: 600; color: var(--text-max);
+            margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+        }
+
+        .section-num {
+            width: 22px; height: 22px;
+            background: var(--gold);
+            border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: 700; color: var(--bg-deep);
+        }
+
+        .must-item {
+            display: flex; align-items: flex-start; gap: 12px;
+            padding: 14px 16px;
+            background: var(--bg-hover);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            transition: all 0.2s;
+        }
+
+        .must-item:hover { background: rgba(200, 150, 62, 0.08); }
+
+        .must-item:last-child { margin-bottom: 0; }
+
+        .must-icon { font-size: 18px; flex-shrink: 0; }
+
+        .must-content { flex: 1; }
+
+        .must-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+
+        .must-desc { font-size: 12px; color: var(--text-sec); line-height: 1.5; }
+
+        .priority-high { border-left: 3px solid var(--down); }
+        .priority-mid { border-left: 3px solid var(--warn); }
+        .priority-low { border-left: 3px solid var(--up); }
+
+        /* 品种走势 */
+        .price-trend { margin-bottom: 24px; }
+
+        .trend-table { width: 100%; }
+
+        .trend-header {
+            display: grid;
+            grid-template-columns: 100px 1fr 100px 80px 1.5fr;
+            gap: 16px;
+            padding: 10px 14px;
+            background: rgba(200, 150, 62, 0.06);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 11px; font-weight: 600;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .trend-row {
+            display: grid;
+            grid-template-columns: 100px 1fr 100px 80px 1.5fr;
+            gap: 16px;
+            padding: 14px;
+            border-bottom: 1px solid var(--line);
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .trend-row:hover { background: var(--bg-hover); }
+        .trend-row:last-child { border-bottom: none; }
+
+        .trend-name { font-size: 14px; font-weight: 600; }
+        .trend-price { font-size: 18px; font-weight: 700; color: var(--text-max); }
+        .trend-unit { font-size: 10px; color: var(--text-dim); }
+
+        .trend-change {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 13px; font-weight: 600;
+        }
+
+        .trend-change.up { background: var(--up-bg); color: var(--up); }
+        .trend-change.down { background: var(--down-bg); color: var(--down); }
+        .trend-change.neutral { background: rgba(136, 136, 136, 0.1); color: var(--text-sec); }
+
+        .trend-comment { font-size: 12px; color: var(--text-sec); }
+
+        /* 政策动态 */
+        .policy-section { margin-bottom: 24px; }
+
+        .policy-item {
+            display: flex; align-items: flex-start; gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .policy-item:last-child { border-bottom: none; }
+
+        .policy-icon { font-size: 20px; flex-shrink: 0; }
+
+        .policy-content { flex: 1; }
+
+        .policy-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+
+        .policy-desc { font-size: 12px; color: var(--text-sec); }
+
+        .policy-tag {
+            font-size: 10px;
+            color: var(--blue-light);
+            background: rgba(27, 77, 122, 0.15);
+            padding: 3px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 6px;
+        }
+
+        /* 供需信号 */
+        .supply-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+        .supply-block {
+            padding: 16px;
+            background: var(--bg-hover);
+            border-radius: 10px;
+        }
+
+        .supply-title {
+            font-size: 12px; font-weight: 600;
+            margin-bottom: 12px;
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        .supply-title span { font-size: 14px; }
+
+        .supply-list { list-style: none; }
+
+        .supply-list li {
+            font-size: 11px; color: var(--text-sec);
+            padding: 6px 0;
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        .supply-list li::before {
+            content: '•';
+            color: var(--gold);
+            font-size: 14px;
+        }
+
+        /* 下周展望 */
+        .outlook-section {
+            background: linear-gradient(135deg, rgba(27, 77, 122, 0.15), rgba(27, 77, 122, 0.05));
+            border: 1px solid var(--blue);
+            border-radius: 12px;
+            padding: 18px;
+        }
+
+        .outlook-main { margin-bottom: 14px; }
+
+        .outlook-title { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+
+        .outlook-text { font-size: 12px; color: var(--text-sec); line-height: 1.6; }
+
+        .outlook-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+        .outlook-card {
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        .outlook-card-title {
+            font-size: 11px; font-weight: 600;
+            margin-bottom: 6px;
+            display: flex; align-items: center; gap: 6px;
+        }
+
+        .outlook-card-title.risk { color: var(--down); }
+        .outlook-card-title.opp { color: var(--up); }
+
+        .outlook-card-text { font-size: 11px; color: var(--text-sec); }
+
+        /* 历史简报 */
+        .history-section {}
+
+        .history-filter {
+            display: flex; align-items: center; gap: 12px;
+        }
+
+        .filter-btn {
+            padding: 6px 14px;
+            background: var(--bg-hover);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            font-size: 11px;
+            color: var(--text-sec);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover { border-color: var(--gold); color: var(--gold); }
+        .filter-btn.active { background: rgba(200, 150, 62, 0.15); border-color: var(--gold); color: var(--gold); }
+
+        .history-list { margin-top: 16px; }
+
+        .history-item {
+            display: flex; align-items: center;
+            padding: 16px;
+            background: var(--bg-hover);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .history-item:hover { background: rgba(200, 150, 62, 0.08); border-color: var(--gold); }
+
+        .history-date {
+            width: 60px;
+            text-align: center;
+            padding-right: 16px;
+            border-right: 1px solid var(--line);
+            margin-right: 16px;
+        }
+
+        .history-day { font-size: 20px; font-weight: 700; color: var(--gold); }
+        .history-month { font-size: 10px; color: var(--text-dim); }
+
+        .history-content { flex: 1; }
+
+        .history-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+
+        .history-summary { font-size: 11px; color: var(--text-sec); }
+
+        .history-expand {
+            padding: 6px 14px;
+            background: rgba(200, 150, 62, 0.1);
+            border-radius: 6px;
+            font-size: 11px; color: var(--gold);
+            cursor: pointer;
+        }
+
+        /* 简报设置 */
+        .settings-section {}
+
+        .setting-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .setting-row:last-child { border-bottom: none; }
+
+        .setting-label { font-size: 13px; font-weight: 500; }
+
+        .setting-desc { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+
+        .setting-control { display: flex; align-items: center; gap: 10px; }
+
+        .select-custom {
+            padding: 8px 14px;
+            background: var(--bg-hover);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            font-size: 12px; color: var(--text-pri);
+            cursor: pointer;
+            outline: none;
+        }
+
+        .select-custom:focus { border-color: var(--gold); }
+
+        .checkbox-group { display: flex; flex-wrap: wrap; gap: 8px; }
+
+        .checkbox-item {
+            display: flex; align-items: center; gap: 6px;
+            padding: 6px 12px;
+            background: var(--bg-hover);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .checkbox-item:hover { border-color: var(--gold); }
+        .checkbox-item.checked { background: rgba(200, 150, 62, 0.15); border-color: var(--gold); color: var(--gold); }
+
+        .checkbox-item::before {
+            content: '';
+            width: 14px; height: 14px;
+            border: 1px solid var(--text-dim);
+            border-radius: 3px;
+            transition: all 0.2s;
+        }
+
+        .checkbox-item.checked::before {
+            background: var(--gold);
+            border-color: var(--gold);
+        }
+
+        .save-btn {
+            padding: 10px 24px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+            border: none;
+            border-radius: 8px;
+            font-size: 13px; font-weight: 600;
+            color: var(--bg-deep);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .save-btn:hover { transform: scale(1.02); }
+
+        /* 页脚 */
+        .footer {
+            padding: 20px 0;
+            text-align: center;
+            border-top: 1px solid var(--line);
+            margin-top: 24px;
+        }
+
+        .footer p { font-size: 10px; color: var(--text-hint); }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="sidebar-logo">衍</div>
+                        <nav class="sidebar-nav">
+                <a href="index.html" class="nav-btn">
+                    <span class="nav-icon">🏠</span>
+                    <span class="nav-label">首页</span>
+                </a>
+                <a href="market.html" class="nav-btn">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-label">行情</span>
+                </a>
+                <a href="supply-chain.html" class="nav-btn">
+                    <span class="nav-icon">🔗</span>
+                    <span class="nav-label">产业链</span>
+                </a>
+                <a href="prediction.html" class="nav-btn">
+                    <span class="nav-icon">🧠</span>
+                    <span class="nav-label">AI预测</span>
+                </a>
+                <a href="alert.html" class="nav-btn">
+                    <span class="nav-icon">🔔</span>
+                    <span class="nav-label">预警</span>
+                </a>
+                <a href="briefing.html" class="nav-btn active">
+                    <span class="nav-icon">📰</span>
+                    <span class="nav-label">简报</span>
+                </a>
+            </nav>
+            <div class="sidebar-user">采</div>
+        </aside>
+
+        <main class="main">
+            <header class="header">
+                <div class="header-left">
+                    <h1>AI简报</h1>
+                    <p><span class="live-dot"></span>每日自动生成 · 家电制造业原材料洞察</p>
+                </div>
+            </header>
+
+            <div class="breadcrumb">
+                <a href="index.html">首页</a>
+                <span>/</span>
+                <span style="color: var(--gold);">AI简报</span>
+            </div>
+
+            <!-- 今日简报 -->
+            <div class="panel today-report">
+                <div class="report-meta">
+                    <div>
+                        <div class="ai-badge">AI生成 · 2026年5月17日 09:00</div>
+                    </div>
+                    <div class="report-time">
+                        <span style="color: var(--up);">●</span> 数据已更新至最新
+                    </div>
+                </div>
+
+                <!-- 今日3件必知 -->
+                <div class="must-know">
+                    <div class="section-title">
+                        <span class="section-num">1</span>
+                        今日3件必知
+                    </div>
+
+                    <div class="must-item priority-high">
+                        <span class="must-icon">🔴</span>
+                        <div class="must-content">
+                            <div class="must-title">铜价突破7.2万元/吨，空调Q3采购窗口收窄</div>
+                            <div class="must-desc">LME铜价持续走强，沪铜主力合约收于72,300元/吨，日涨幅1.8%。秘鲁铜矿供应扰动叠加国内冶炼厂检修，短期内现货偏紧。预计Q3空调排产旺季来临时，铜采购成本将进一步上升。</div>
+                        </div>
+                    </div>
+
+                    <div class="must-item priority-mid">
+                        <span class="must-icon">🟡</span>
+                        <div class="must-content">
+                            <div class="must-title">以旧换新细则落地，预计拉动空调排产+8%</div>
+                            <div class="must-desc">商务部等14部门联合发布的《促进家电以旧换新行动方案》正式落地，明确冰箱、洗衣机、空调等大家电补贴15%-20%，单件最高2000元。渠道调研显示，终端门店咨询量环比增长40%。</div>
+                        </div>
+                    </div>
+
+                    <div class="must-item priority-low">
+                        <span class="must-icon">🟢</span>
+                        <div class="must-content">
+                            <div class="must-title">LME铝库存降至年内新低，关注Q3铝材锁价机会</div>
+                            <div class="must-desc">LME铝库存降至52万吨，刷新年内低点。国内电解铝社会库存同步下降，铝材现货升水扩大。云南地区产能复产进度低于预期，Q3铝价支撑较强，建议择机锁定采购价格。</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 核心品种走势 -->
+                <div class="price-trend">
+                    <div class="section-title">
+                        <span class="section-num">2</span>
+                        核心品种走势速览
+                    </div>
+
+                    <div class="trend-table">
+                        <div class="trend-header">
+                            <span>品种</span>
+                            <span>价格</span>
+                            <span>日涨跌</span>
+                            <span>趋势</span>
+                            <span>点评</span>
+                        </div>
+
+                        <div class="trend-row" onclick="location.href='copper.html'" style="cursor:pointer;">
+                            <span class="trend-name">🥇 铜</span>
+                            <div>
+                                <span class="trend-price">72,300</span>
+                                <span class="trend-unit">元/吨</span>
+                            </div>
+                            <span class="trend-change up">↑ +1.8%</span>
+                            <span class="trend-change neutral" style="background: var(--up-bg); color: var(--up);">强势</span>
+                            <span class="trend-comment">突破关键阻力位，7.5万为下一目标，短期偏强</span>
+                        </div>
+
+                        <div class="trend-row" onclick="location.href='aluminum.html'" style="cursor:pointer;">
+                            <span class="trend-name">🔩 铝</span>
+                            <div>
+                                <span class="trend-price">18,920</span>
+                                <span class="trend-unit">元/吨</span>
+                            </div>
+                            <span class="trend-change up">↑ +0.6%</span>
+                            <span class="trend-change neutral" style="background: var(--up-bg); color: var(--up);">偏强</span>
+                            <span class="trend-comment">库存低位支撑，云南复产不及预期，震荡偏强</span>
+                        </div>
+
+                        <div class="trend-row" onclick="location.href='steel.html'" style="cursor:pointer;">
+                            <span class="trend-name">⚙️ 钢材</span>
+                            <div>
+                                <span class="trend-price">4,180</span>
+                                <span class="trend-unit">元/吨</span>
+                            </div>
+                            <span class="trend-change down">↓ -0.4%</span>
+                            <span class="trend-change neutral" style="background: var(--down-bg); color: var(--down);">承压</span>
+                            <span class="trend-comment">钢厂开工率回升压制价格，冰箱外壳成本压力缓解</span>
+                        </div>
+
+                        <div class="trend-row" onclick="location.href='plastic.html'" style="cursor:pointer;">
+                            <span class="trend-name">💎 塑料</span>
+                            <div>
+                                <span class="trend-price">8,650</span>
+                                <span class="trend-unit">元/吨</span>
+                            </div>
+                            <span class="trend-change neutral">→ 0%</span>
+                            <span class="trend-change neutral">平稳</span>
+                            <span class="trend-comment">石化负荷稳定，供需平衡，洗衣机塑料件成本无变化</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 政策动态 -->
+                <div class="policy-section">
+                    <div class="section-title">
+                        <span class="section-num">3</span>
+                        政策动态
+                    </div>
+
+                    <div class="policy-item">
+                        <span class="policy-icon">📜</span>
+                        <div class="policy-content">
+                            <div class="policy-title">商务部等14部门联合发布《促进家电以旧换新行动方案》</div>
+                            <div class="policy-desc">明确补贴范围覆盖冰箱、洗衣机、空调等大家电，补贴比例15%-20%，单件最高2000元。预计全年带动销售5000万台，拉动原材料需求增长。</div>
+                            <span class="policy-tag">#以旧换新 #政策利好</span>
+                        </div>
+                    </div>
+
+                    <div class="policy-item">
+                        <span class="policy-icon">🏭</span>
+                        <div class="policy-content">
+                            <div class="policy-title">工信部部署2026年工业稳增长重点工作</div>
+                            <div class="policy-desc">强调保障大宗原材料供应稳定，支持重点产业链供应链对接。家电被列为重点支持的消费品类。</div>
+                            <span class="policy-tag">#稳增长 #供应链</span>
+                        </div>
+                    </div>
+
+                    <div class="policy-item">
+                        <span class="policy-icon">🌍</span>
+                        <div class="policy-content">
+                            <div class="policy-title">美联储维持利率不变，美元走弱支撑大宗商品</div>
+                            <div class="policy-desc">美联储5月会议维持利率不变，鲍威尔暗示降息周期临近。美元指数回落，利好铜、铝等以美元计价的大宗商品。</div>
+                            <span class="policy-tag">#美联储 #汇率</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 供需信号 -->
+                <div class="section-title">
+                    <span class="section-num">4</span>
+                    供需信号
+                </div>
+
+                <div class="supply-section">
+                    <div class="supply-block">
+                        <div class="supply-title">
+                            <span>📉</span> 供应端信号
+                        </div>
+                        <ul class="supply-list">
+                            <li>铜冶炼厂集中检修，5月开工率降至78%</li>
+                            <li>LME铝库存再创新低，现货升水扩大至150元</li>
+                            <li>钢材社会库存小幅回升，钢厂发货量增加</li>
+                        </ul>
+                    </div>
+                    <div class="supply-block">
+                        <div class="supply-title">
+                            <span>📈</span> 需求端信号
+                        </div>
+                        <ul class="supply-list">
+                            <li>空调企业Q3排产计划同比增长8%</li>
+                            <li>冰箱出口订单回暖，环比增长12%</li>
+                            <li>洗衣机内销稳步增长，原材料备货积极</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 下周展望 -->
+                <div class="section-title" style="margin-top: 24px;">
+                    <span class="section-num">5</span>
+                    下周展望
+                </div>
+
+                <div class="outlook-section">
+                    <div class="outlook-main">
+                        <div class="outlook-title">📊 综合研判</div>
+                        <div class="outlook-text">
+                            铜价预计维持强势格局，秘鲁铜矿扰动持续，叠加Q3旺季预期，铜材采购窗口正在收窄。铝价震荡偏强，库存低位提供支撑。钢材价格承压，但下行空间有限。塑料价格保持平稳。建议密切关注铜、铝期货走势，择机锁定Q3采购量。
+                        </div>
+                    </div>
+
+                    <div class="outlook-grid">
+                        <div class="outlook-card">
+                            <div class="outlook-card-title risk">⚠️ 风险提示</div>
+                            <div class="outlook-card-text">铜价快速上涨压缩空调压缩机利润，需关注成本传导情况。汇率波动可能影响进口原材料成本。</div>
+                        </div>
+                        <div class="outlook-card">
+                            <div class="outlook-card-title opp">💡 机会提示</div>
+                            <div class="outlook-card-text">铝材Q3锁价窗口显现，建议提前布局。关注以旧换新带动的需求增量，择机补充铜材库存。</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 历史简报 -->
+            <div class="panel history-section">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <div class="panel-icon">📚</div>
+                        <h3>历史简报</h3>
+                    </div>
+                    <div class="history-filter">
+                        <span class="filter-btn active">近7天</span>
+                        <span class="filter-btn">近30天</span>
+                        <span class="filter-btn">全部</span>
+                    </div>
+                </div>
+
+                <div class="history-list">
+                    <div class="history-item">
+                        <div class="history-date">
+                            <div class="history-day">16</div>
+                            <div class="history-month">5月</div>
+                        </div>
+                        <div class="history-content">
+                            <div class="history-title">家电原材料日报 · 铜价维持高位</div>
+                            <div class="history-summary">3件必知：铜价72,100元/吨(+0.9%)；空调排产稳步增长；钢材社会库存下降</div>
+                        </div>
+                        <span class="history-expand">查看详情 →</span>
+                    </div>
+
+                    <div class="history-item">
+                        <div class="history-date">
+                            <div class="history-day">15</div>
+                            <div class="history-month">5月</div>
+                        </div>
+                        <div class="history-content">
+                            <div class="history-title">家电原材料日报 · 政策利好持续</div>
+                            <div class="history-summary">3件必知：以旧换新细则呼之欲出；铝价18,800元/吨；塑料价格平稳</div>
+                        </div>
+                        <span class="history-expand">查看详情 →</span>
+                    </div>
+
+                    <div class="history-item">
+                        <div class="history-date">
+                            <div class="history-day">14</div>
+                            <div class="history-month">5月</div>
+                        </div>
+                        <div class="history-content">
+                            <div class="history-title">家电原材料日报 · 铜矿供应扰动</div>
+                            <div class="history-summary">3件必知：秘鲁铜矿运输受阻；LME铝库存创年内新低；钢材价格小幅回落</div>
+                        </div>
+                        <span class="history-expand">查看详情 →</span>
+                    </div>
+
+                    <div class="history-item">
+                        <div class="history-date">
+                            <div class="history-day">13</div>
+                            <div class="history-month">5月</div>
+                        </div>
+                        <div class="history-content">
+                            <div class="history-title">家电原材料日报 · 铜价突破7万</div>
+                            <div class="history-summary">3件必知：铜价突破71,000元/吨；空调出口订单回暖；铝价震荡整理</div>
+                        </div>
+                        <span class="history-expand">查看详情 →</span>
+                    </div>
+
+                    <div class="history-item">
+                        <div class="history-date">
+                            <div class="history-day">12</div>
+                            <div class="history-month">5月</div>
+                        </div>
+                        <div class="history-content">
+                            <div class="history-title">家电原材料日报 · 节后市场平稳</div>
+                            <div class="history-summary">3件必知：节后首周价格平稳；空调企业开始Q3备货；钢材库存下降</div>
+                        </div>
+                        <span class="history-expand">查看详情 →</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 简报定制设置 -->
+            <div class="panel settings-section">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <div class="panel-icon">⚙️</div>
+                        <h3>简报定制设置</h3>
+                    </div>
+                </div>
+
+                <div class="setting-row">
+                    <div>
+                        <div class="setting-label">关注品种</div>
+                        <div class="setting-desc">选择您需要重点关注的原材料品种</div>
+                    </div>
+                    <div class="setting-control">
+                        <div class="checkbox-group">
+                            <span class="checkbox-item checked">铜</span>
+                            <span class="checkbox-item checked">铝</span>
+                            <span class="checkbox-item checked">钢材</span>
+                            <span class="checkbox-item checked">塑料</span>
+                            <span class="checkbox-item">不锈钢</span>
+                            <span class="checkbox-item">铜管</span>
+                            <span class="checkbox-item">铝材</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-row">
+                    <div>
+                        <div class="setting-label">推送时间</div>
+                        <div class="setting-desc">每日简报的生成和推送时间</div>
+                    </div>
+                    <div class="setting-control">
+                        <select class="select-custom">
+                            <option>每日 08:00</option>
+                            <option>每日 09:00</option>
+                            <option selected>每日 09:30</option>
+                            <option>每日 10:00</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="setting-row">
+                    <div>
+                        <div class="setting-label">简报深度</div>
+                        <div class="setting-desc">简报的详细程度和覆盖范围</div>
+                    </div>
+                    <div class="setting-control">
+                        <select class="select-custom">
+                            <option>简要版（核心3点）</option>
+                            <option selected>标准版（今日必知+走势）</option>
+                            <option>详细版（全面分析+建议）</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="setting-row">
+                    <div>
+                        <div class="setting-label">预警推送</div>
+                        <div class="setting-desc">接收重要价格异动的实时推送</div>
+                    </div>
+                    <div class="setting-control">
+                        <div class="checkbox-group">
+                            <span class="checkbox-item checked">铜价异动</span>
+                            <span class="checkbox-item checked">铝价异动</span>
+                            <span class="checkbox-item">钢材异动</span>
+                            <span class="checkbox-item">政策动态</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <button class="save-btn">保存设置</button>
+                </div>
+            </div>
+
+            <footer class="footer">
+                <p>© 2024 钧衍智研 OPC · 家电制造业大宗商品AI预测平台 · 数据仅供参考，不构成投资建议</p>
+            </footer>
+        </main>
+    </div>
+
+    <script>
+        // Checkbox交互
+        document.querySelectorAll('.checkbox-item').forEach(item => {
+            item.addEventListener('click', () => item.classList.toggle('checked'));
+        });
+
+        // 历史简报筛选
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        // 保存设置
+        document.querySelector('.save-btn').addEventListener('click', () => {
+            const btn = document.querySelector('.save-btn');
+            btn.textContent = '保存中...';
+            btn.style.opacity = '0.7';
+            setTimeout(() => {
+                btn.textContent = '✓ 已保存';
+                btn.style.opacity = '1';
+                setTimeout(() => btn.textContent = '保存设置', 2000);
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

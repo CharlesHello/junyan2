@@ -1,0 +1,1647 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>产业链分析 - 钧衍智研OPC</title>
+    <style>
+        :root {
+            --gold: #C8963E;
+            --gold-light: #E8C56A;
+            --gold-dim: #6B5A30;
+            --blue: #1B4D7A;
+            --blue-light: #3A8BC7;
+            --orange: #E8712B;
+            
+            --bg-deep: #060D18;
+            --bg-base: #0A1424;
+            --bg-card: #0F1D32;
+            --bg-hover: #152640;
+            --bg-raised: #1A3050;
+            
+            --text-max: #FFFFFF;
+            --text-pri: #E0E6EC;
+            --text-sec: #8899AA;
+            --text-dim: #556677;
+            --text-hint: #334455;
+            
+            --up: #22C55E;
+            --up-bg: rgba(34, 197, 94, 0.12);
+            --down: #EF4444;
+            --down-bg: rgba(239, 68, 68, 0.12);
+            --warn: #F59E0B;
+            --warn-bg: rgba(245, 158, 11, 0.12);
+            
+            --line: rgba(200, 150, 62, 0.1);
+            --line-strong: rgba(200, 150, 62, 0.2);
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            --glow: 0 0 25px rgba(200, 150, 62, 0.15);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        a { text-decoration: none; color: inherit; }
+        a:hover { text-decoration: none; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-base);
+            color: var(--text-pri);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        .app { display: flex; min-height: 100vh; }
+
+        /* 左侧边栏 */
+        .sidebar {
+            width: 72px;
+            background: var(--bg-deep);
+            border-right: 1px solid var(--line);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 100;
+        }
+
+        .sidebar-logo {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--bg-deep);
+            margin-bottom: 32px;
+            box-shadow: var(--glow);
+        }
+
+        .sidebar-nav { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+
+        .nav-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            text-decoration: none;
+        }
+
+        .nav-btn:hover { background: rgba(200, 150, 62, 0.1); }
+
+        .nav-btn.active { background: rgba(200, 150, 62, 0.15); }
+
+        .nav-btn.active::before {
+            content: '';
+            position: absolute;
+            left: -12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 24px;
+            background: var(--gold);
+            border-radius: 0 3px 3px 0;
+        }
+
+        .nav-icon { font-size: 20px; margin-bottom: 2px; }
+        .nav-label { font-size: 9px; color: var(--text-dim); }
+        .nav-btn.active .nav-label { color: var(--gold); }
+
+        .sidebar-user {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--blue), var(--blue-light));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* 主内容区 */
+        .main { flex: 1; margin-left: 72px; padding: 24px 32px; }
+
+        /* 顶部栏 */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .header-left h1 {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--text-max);
+            margin-bottom: 4px;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        .breadcrumb a {
+            color: var(--text-dim);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .breadcrumb a:hover { color: var(--gold); }
+
+        .breadcrumb span { color: var(--text-sec); }
+
+        .breadcrumb .current { color: var(--gold); }
+
+        .header-right { display: flex; align-items: center; gap: 16px; }
+
+        .time-display {
+            font-size: 12px;
+            color: var(--text-sec);
+            padding: 8px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+        }
+
+        /* 产业链全景图区域 */
+        .chain-overview {
+            background: var(--bg-card);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chain-overview::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--gold), var(--blue), var(--orange));
+        }
+
+        .chain-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .chain-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chain-title-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(200, 150, 62, 0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .chain-title h2 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-max);
+        }
+
+        .chain-title p {
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        .chain-legend {
+            display: flex;
+            gap: 20px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            color: var(--text-sec);
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 4px;
+            border-radius: 2px;
+        }
+
+        .legend-dot.copper { background: var(--gold); }
+        .legend-dot.steel { background: var(--blue-light); }
+        .legend-dot.plastic { background: var(--orange); }
+
+        .legend-dot.bottle {
+            background: var(--orange);
+            box-shadow: 0 0 8px var(--orange);
+        }
+
+        /* SVG产业链图 */
+        .chain-svg-container {
+            width: 100%;
+            height: 380px;
+            position: relative;
+        }
+
+        #chainSvg { width: 100%; height: 100%; }
+
+        /* SVG节点样式 */
+        .chain-line {
+            stroke-width: 2;
+            fill: none;
+            opacity: 0.6;
+        }
+
+        .copper-line { stroke: var(--gold); }
+        .steel-line { stroke: var(--blue-light); }
+        .plastic-line { stroke: var(--orange); }
+
+        .chain-node-group { cursor: pointer; }
+
+        .node-bg {
+            rx: 8;
+            ry: 8;
+            transition: all 0.2s;
+        }
+
+        .node-bg.copper { fill: rgba(200, 150, 62, 0.1); stroke: var(--gold-dim); }
+        .node-bg.steel { fill: rgba(27, 77, 122, 0.1); stroke: var(--blue); }
+        .node-bg.plastic { fill: rgba(232, 113, 43, 0.1); stroke: var(--orange); }
+
+        .node-bg.bottle {
+            fill: rgba(232, 113, 43, 0.15);
+            stroke: var(--orange);
+            stroke-width: 2;
+            filter: drop-shadow(0 0 6px rgba(232, 113, 43, 0.4));
+        }
+
+        .chain-node-group:hover .node-bg {
+            transform: translateY(-2px);
+        }
+
+        .chain-node-group:hover .node-bg.copper { stroke: var(--gold); fill: rgba(200, 150, 62, 0.15); }
+        .chain-node-group:hover .node-bg.steel { stroke: var(--blue-light); fill: rgba(27, 77, 122, 0.15); }
+        .chain-node-group:hover .node-bg.plastic { stroke: var(--orange); fill: rgba(232, 113, 43, 0.2); }
+
+        .node-icon { font-size: 18px; }
+        .node-label { font-size: 10px; fill: var(--text-pri); font-weight: 500; }
+        .node-sublabel { font-size: 8px; fill: var(--text-dim); }
+
+        /* 流动粒子动画 */
+        .flow-particle {
+            fill: var(--gold);
+            opacity: 0.8;
+        }
+
+        .flow-particle.steel { fill: var(--blue-light); }
+        .flow-particle.plastic { fill: var(--orange); }
+
+        /* 节点详情浮窗 */
+        .node-tooltip {
+            position: absolute;
+            background: rgba(10, 20, 36, 0.98);
+            border: 1px solid var(--line-strong);
+            border-radius: 12px;
+            padding: 16px;
+            min-width: 220px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 1000;
+        }
+
+        .node-tooltip.show { opacity: 1; }
+
+        .tooltip-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .tooltip-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .tooltip-icon.copper { background: rgba(200, 150, 62, 0.15); }
+        .tooltip-icon.steel { background: rgba(27, 77, 122, 0.15); }
+        .tooltip-icon.plastic { background: rgba(232, 113, 43, 0.15); }
+
+        .tooltip-name { font-size: 13px; font-weight: 600; color: var(--text-max); }
+        .tooltip-chain { font-size: 10px; color: var(--text-dim); }
+
+        .tooltip-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+        .tooltip-stat {
+            background: var(--bg-hover);
+            border-radius: 6px;
+            padding: 8px 10px;
+        }
+
+        .tooltip-stat-label { font-size: 9px; color: var(--text-dim); margin-bottom: 3px; }
+        .tooltip-stat-value { font-size: 14px; font-weight: 600; }
+        .tooltip-stat-value.up { color: var(--up); }
+        .tooltip-stat-value.down { color: var(--down); }
+        .tooltip-stat-value.neutral { color: var(--text-pri); }
+
+        /* 面板区域 */
+        .panel-row { display: grid; gap: 24px; margin-bottom: 24px; }
+        .grid-2 { grid-template-columns: 1fr 1fr; }
+        .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .grid-7-5 { grid-template-columns: 7fr 5fr; }
+
+        .panel {
+            background: var(--bg-card);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 22px;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+
+        .panel-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(200, 150, 62, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .panel-title h3 { font-size: 15px; font-weight: 600; color: var(--text-pri); }
+
+        .panel-tag {
+            font-size: 10px;
+            color: var(--gold);
+            background: rgba(200, 150, 62, 0.1);
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+
+        /* 供需信号仪表盘 */
+        .signal-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .signal-card {
+            background: var(--bg-hover);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 14px;
+            transition: all 0.2s;
+        }
+
+        .signal-card:hover {
+            border-color: var(--gold);
+            transform: translateY(-2px);
+        }
+
+        .signal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .signal-name {
+            font-size: 11px;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .signal-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .signal-dot.high { background: var(--down); }
+        .signal-dot.normal { background: var(--up); }
+        .signal-dot.low { background: var(--warn); }
+
+        .signal-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-max);
+        }
+
+        .signal-bars {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .signal-bar {
+            flex: 1;
+            height: 4px;
+            background: var(--bg-base);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .signal-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+
+        .signal-bar-fill.copper { background: var(--gold); }
+        .signal-bar-fill.steel { background: var(--blue-light); }
+        .signal-bar-fill.plastic { background: var(--orange); }
+
+        .signal-arrow {
+            font-size: 12px;
+            margin-left: 6px;
+        }
+
+        .signal-arrow.up { color: var(--up); }
+        .signal-arrow.down { color: var(--down); }
+        .signal-arrow.neutral { color: var(--text-sec); }
+
+        /* 传导分析面板 */
+        .transmission-selector {
+            margin-bottom: 18px;
+        }
+
+        .selector-label {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+        }
+
+        .selector-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .selector-btn {
+            padding: 8px 14px;
+            background: var(--bg-hover);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            font-size: 11px;
+            color: var(--text-sec);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .selector-btn:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        .selector-btn.active {
+            background: rgba(200, 150, 62, 0.12);
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        .transmission-result {
+            background: var(--bg-hover);
+            border-radius: 10px;
+            padding: 16px;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .result-title {
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        .result-impact {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .result-impact.high { color: var(--down); }
+        .result-impact.medium { color: var(--warn); }
+        .result-impact.low { color: var(--up); }
+
+        .impact-chain {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .impact-step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .impact-node {
+            min-width: 80px;
+            padding: 6px 10px;
+            background: var(--bg-base);
+            border-radius: 6px;
+            font-size: 10px;
+            text-align: center;
+        }
+
+        .impact-arrow {
+            color: var(--text-hint);
+            font-size: 12px;
+        }
+
+        .impact-bar-container {
+            flex: 1;
+            height: 8px;
+            background: var(--bg-base);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .impact-bar {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .impact-bar.strong { background: var(--down); }
+        .impact-bar.medium { background: var(--warn); }
+        .impact-bar.weak { background: var(--up); }
+
+        .impact-value {
+            min-width: 50px;
+            font-size: 11px;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .impact-value.high { color: var(--down); }
+        .impact-value.medium { color: var(--warn); }
+        .impact-value.low { color: var(--up); }
+
+        /* 瓶颈识别 */
+        .bottleneck-list { display: flex; flex-direction: column; gap: 12px; }
+
+        .bottleneck-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px;
+            background: rgba(232, 113, 43, 0.06);
+            border: 1px solid rgba(232, 113, 43, 0.15);
+            border-left: 3px solid var(--orange);
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .bottleneck-item:hover {
+            background: rgba(232, 113, 43, 0.1);
+            transform: translateX(4px);
+        }
+
+        .bottleneck-icon {
+            width: 36px;
+            height: 36px;
+            background: rgba(232, 113, 43, 0.15);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .bottleneck-info { flex: 1; }
+
+        .bottleneck-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-max);
+            margin-bottom: 3px;
+        }
+
+        .bottleneck-reason {
+            font-size: 11px;
+            color: var(--text-sec);
+        }
+
+        .bottleneck-severity {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .severity-badge {
+            font-size: 9px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .severity-badge.critical {
+            background: var(--down-bg);
+            color: var(--down);
+        }
+
+        .severity-badge.warning {
+            background: var(--warn-bg);
+            color: var(--warn);
+        }
+
+        .severity-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--orange);
+        }
+
+        /* 瓶颈趋势图 */
+        .bottleneck-trend {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--line);
+        }
+
+        .trend-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .trend-title { font-size: 11px; color: var(--text-dim); }
+
+        .trend-select {
+            padding: 4px 8px;
+            background: var(--bg-hover);
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            font-size: 10px;
+            color: var(--text-sec);
+            cursor: pointer;
+        }
+
+        .trend-chart {
+            height: 100px;
+            background: var(--bg-hover);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #bottleneckChart { width: 100%; height: 100%; }
+
+        /* 成本影响仪表 */
+        .cost-meter {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .meter-ring {
+            width: 120px;
+            height: 120px;
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .meter-ring svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+
+        .meter-track {
+            fill: none;
+            stroke: rgba(232, 113, 43, 0.1);
+            stroke-width: 8;
+        }
+
+        .meter-fill {
+            fill: none;
+            stroke: var(--orange);
+            stroke-width: 8;
+            stroke-linecap: round;
+            stroke-dasharray: 314;
+            stroke-dashoffset: 100;
+            transition: stroke-dashoffset 1s ease;
+        }
+
+        .meter-value {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .meter-num {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--orange);
+        }
+
+        .meter-label { font-size: 10px; color: var(--text-dim); }
+
+        .cost-breakdown {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .cost-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: var(--bg-hover);
+            border-radius: 6px;
+        }
+
+        .cost-name { font-size: 11px; color: var(--text-sec); }
+        .cost-value { font-size: 12px; font-weight: 600; }
+        .cost-value.copper { color: var(--gold); }
+        .cost-value.steel { color: var(--blue-light); }
+        .cost-value.plastic { color: var(--orange); }
+
+        /* 脉冲动画 */
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.1); }
+        }
+
+        .bottle-pulse {
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        /* 流动线动画 */
+        @keyframes flowAnimation {
+            0% { stroke-dashoffset: 20; }
+            100% { stroke-dashoffset: 0; }
+        }
+
+        .flow-line {
+            stroke-dasharray: 10 10;
+            animation: flowAnimation 1s linear infinite;
+        }
+
+        /* 响应式 */
+        @media (max-width: 1200px) {
+            .signal-grid { grid-template-columns: repeat(2, 1fr); }
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .grid-7-5 { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            .chain-svg-container { height: 500px; }
+            .chain-legend { flex-wrap: wrap; gap: 10px; }
+            .signal-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- 左侧导航栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">衍</div>
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-btn">
+                    <span class="nav-icon">🏠</span>
+                    <span class="nav-label">首页</span>
+                </a>
+                <a href="market.html" class="nav-btn">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-label">行情</span>
+                </a>
+                <a href="supply-chain.html" class="nav-btn active">
+                    <span class="nav-icon">🔗</span>
+                    <span class="nav-label">产业链</span>
+                </a>
+                <a href="prediction.html" class="nav-btn">
+                    <span class="nav-icon">🧠</span>
+                    <span class="nav-label">AI预测</span>
+                </a>
+                <a href="alert.html" class="nav-btn">
+                    <span class="nav-icon">🔔</span>
+                    <span class="nav-label">预警</span>
+                </a>
+                <a href="briefing.html" class="nav-btn">
+                    <span class="nav-icon">📰</span>
+                    <span class="nav-label">简报</span>
+                </a>
+            </nav>
+            <div class="sidebar-user">采</div>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="main">
+            <!-- 顶部栏 -->
+            <header class="header">
+                <div class="header-left">
+                    <h1>产业链分析</h1>
+                    <div class="breadcrumb">
+                        <a href="index.html">首页</a>
+                        <span>›</span>
+                        <span class="current">产业链分析</span>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="time-display" id="currentTime">--</div>
+                </div>
+            </header>
+
+            <!-- 产业链全景图 -->
+            <section class="chain-overview">
+                <div class="chain-header">
+                    <div class="chain-title">
+                        <div class="chain-title-icon">🔗</div>
+                        <div>
+                            <h2>家电产业链全景图</h2>
+                            <p>实时监控三大原材料产业链传导</p>
+                        </div>
+                    </div>
+                    <div class="chain-legend">
+                        <div class="legend-item">
+                            <div class="legend-dot copper"></div>
+                            <span>铜产业链</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot steel"></div>
+                            <span>钢产业链</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot plastic"></div>
+                            <span>塑料产业链</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot bottle"></div>
+                            <span>瓶颈环节</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="chain-svg-container">
+                    <svg id="chainSvg" viewBox="0 0 1200 380">
+                        <defs>
+                            <marker id="arrowGold" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                                <path d="M0,0 L0,6 L9,3 z" fill="#C8963E" opacity="0.6"/>
+                            </marker>
+                            <marker id="arrowBlue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                                <path d="M0,0 L0,6 L9,3 z" fill="#3A8BC7" opacity="0.6"/>
+                            </marker>
+                            <marker id="arrowOrange" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                                <path d="M0,0 L0,6 L9,3 z" fill="#E8712B" opacity="0.6"/>
+                            </marker>
+                            <filter id="glowOrange">
+                                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                                <feMerge>
+                                    <feMergeNode in="coloredBlur"/>
+                                    <feMergeNode in="SourceGraphic"/>
+                                </feMerge>
+                            </filter>
+                        </defs>
+
+                        <!-- 铜产业链 -->
+                        <g class="copper-chain">
+                            <!-- 连线 -->
+                            <path class="chain-line copper-line flow-line" 
+                                  d="M100,80 L180,80" marker-end="url(#arrowGold)"/>
+                            <path class="chain-line copper-line flow-line" 
+                                  d="M250,80 L330,80" marker-end="url(#arrowGold)"/>
+                            <path class="chain-line copper-line flow-line" 
+                                  d="M400,80 L480,80" marker-end="url(#arrowGold)"/>
+                            <path class="chain-line copper-line flow-line" 
+                                  d="M550,80 L630,80" marker-end="url(#arrowGold)"/>
+                            <path class="chain-line copper-line flow-line" 
+                                  d="M700,80 L780,80" marker-end="url(#arrowGold)"/>
+                            <path class="chain-line copper-line flow-line" 
+                                  d="M850,80 L930,80" marker-end="url(#arrowGold)"/>
+
+                            <!-- 节点组 -->
+                            <g class="chain-node-group" data-chain="copper" data-node="mining" 
+                               data-info='{"name":"铜矿开采","price":"¥82,500/吨","inventory":"45天","utilization":"72%","workRate":"68%"}'>
+                                <rect class="node-bg copper" x="30" y="50" width="70" height="60" rx="8"/>
+                                <text class="node-icon" x="65" y="75" text-anchor="middle">⛏️</text>
+                                <text class="node-label" x="65" y="95" text-anchor="middle">铜矿开采</text>
+                                <text class="node-sublabel" x="65" y="105" text-anchor="middle">上游</text>
+                            </g>
+
+                            <g class="chain-node-group" data-chain="copper" data-node="smelting" onclick="location.href='supply-chain-detail.html'"
+                               data-info='{"name":"铜冶炼","price":"¥68,200/吨","inventory":"12天","utilization":"85%","workRate":"82%"}'>
+                                <rect class="node-bg copper" x="180" y="50" width="70" height="60" rx="8"/>
+                                <text class="node-icon" x="215" y="75" text-anchor="middle">🔥</text>
+                                <text class="node-label" x="215" y="95" text-anchor="middle">铜冶炼</text>
+                                <text class="node-sublabel" x="215" y="105" text-anchor="middle">中游</text>
+                            </g>
+
+                            <g class="chain-node-group" data-chain="copper" data-node="processing"
+                               data-info='{"name":"铜管/铜线","price":"¥72,800/吨","inventory":"18天","utilization":"78%","workRate":"75%"}'>
+                                <rect class="node-bg copper" x="330" y="50" width="70" height="60" rx="8"/>
+                                <text class="node-icon" x="365" y="75" text-anchor="middle">🔧</text>
+                                <text class="node-label" x="365" y="95" text-anchor="middle">铜管/铜线</text>
+                                <text class="node-sublabel" x="365" y="105" text-anchor="middle">加工</text>
+                            </g>
+
+                            <g class="chain-node-group" data-chain="copper" data-node="compressor"
+                               data-info='{"name":"压缩机","price":"¥2,850/台","inventory":"8天","utilization":"92%","workRate":"88%"}'>
+                                <rect class="node-bg copper bottle" x="480" y="50" width="70" height="60" rx="8" filter="url(#glowOrange)"/>
+                                <text class="node-icon" x="515" y="75" text-anchor="middle">⚙️</text>
+                                <text class="node-label" x="515" y="95" text-anchor="middle" fill="#E8712B">压缩机</text>
+                                <text class="node-sublabel" x="515" y="105" text-anchor="middle" fill="#E8712B">瓶颈⚠️</text>
+                            </g>
+
+                            <g class="chain-node-group" data-chain="copper" data-node="ac"
+                               data-info='{"name":"空调/冰箱","price":"¥4,200/台","inventory":"22天","utilization":"75%","workRate":"70%"}'>
+                                <rect class="node-bg copper" x="630" y="50" width="70" height="60" rx="8"/>
+                                <text class="node-icon" x="665" y="75" text-anchor="middle">❄️</text>
+                                <text class="node-label" x="665" y="95" text-anchor="middle">空调/冰箱</text>
+                                <text class="node-sublabel" x="665" y="105" text-anchor="middle">整机</text>
+                            </g>
+
+                            <g class="chain-node-group" data-chain="copper" data-node="retail"
+                               data-info='{"name":"零售","price":"含溢价15%","inventory":"—","utilization":"—","workRate":"—"}'>
+                                <rect class="node-bg copper" x="780" y="50" width="70" height="60" rx="8"/>
+                                <text class="node-icon" x="815" y="75" text-anchor="middle">🏪</text>
+                                <text class="node-label" x="815" y="95" text-anchor="middle">零售</text>
+                                <text class="node-sublabel" x="815" y="105" text-anchor="middle">终端</text>
+                            </g>
+                        </g>
+
+                        <!-- 钢产业链 -->
+                        <g class="steel-chain">
+                            <!-- 连线 -->
+                            <path class="chain-line steel-line flow-line" 
+                                  d="M100,180 L180,180" marker-end="url(#arrowBlue)"/>
+                            <path class="chain-line steel-line flow-line" 
+                                  d="M250,180 L330,180" marker-end="url(#arrowBlue)"/>
+                            <path class="chain-line steel-line flow-line" 
+                                  d="M400,180 L480,180" marker-end="url(#arrowBlue)"/>
+                            <path class="chain-line steel-line flow-line" 
+                                  d="M550,180 L630,180" marker-end="url(#arrowBlue)"/>
+                            <path class="chain-line steel-line flow-line" 
+                                  d="M700,180 L780,180" marker-end="url(#arrowBlue)"/>
+                            <path class="chain-line steel-line flow-line" 
+                                  d="M850,180 L930,180" marker-end="url(#arrowBlue)"/>
+
+                            <!-- 节点组 -->
+                            <g class="chain-node-group" data-chain="steel" data-node="iron"
+                               data-info='{"name":"铁矿开采","price":"¥920/吨","inventory":"38天","utilization":"68%","workRate":"65%"}'>
+                                <rect class="node-bg steel" x="30" y="150" width="70" height="60" rx="8"/>
+                                <text class="node-icon" x="65" y="175" text-anchor="middle">🪨</text>
+                                <text class="node-label" x="65" y="195" text-anchor="middle">铁矿开采</text>
+                                <text class="node-sublabel" x="65" y="205" text-anchor="middle">上游</text>
+                            </g>
+
+                            <g class="chain-node-group" data-chain="steel" data-node="steelmaking"
+                               data-info='{"name":"钢铁冶炼","price":"¥4,280/吨","inventory":"15天","utilization":"80%","workRate":"76%"}'>
+                                <rect class="node-bg steel" x="180" y="150" width="70" height="60" rx="8"/>
+                                <text class="node-icon" x="215" y="175" text-anchor="middle">🏗️</text>
+                                <text class="node-label" x="215" y="195" text-anchor="middle">钢铁冶炼</text>
+                                <text class="node-sublabel" x="215" y="205" text-anchor="middle">中游</text>
+                            </g>
+
+                            <g class="chain-node-group" data-chain="steel" data-node="rolling"
+                               data-info='{"name":"冷轧/热轧","price":"¥4,650/吨","inventory":"20天","utilization":"82%","workRate":"78%"}'>
+                                <rect class="node-bg steel" x="330" y="150" width="70" height="60" rx="8"/>
+                                <text class="node-icon" x="365" y="175" text-anchor="middle">🔩</text>
+                                <text class="node-label" x="365" y="195" text-anchor="middle">冷轧/热轧</text>
+                                <text class="node-sublabel" x="365" y="205" text-anchor="middle">加工</text>
+                            </g>
+
+                            <g class="chain-node-group" data-chain="steel" data-node="structure"
+                               data-info='{"name":"外壳/结构件","price":"¥5,800/吨","inventory":"14天","utilization":"77%","workRate":"72%"}'>
+                                <rect class="node-bg steel" x="480" y="150" width="70" height="60" rx="8"/>
+                                <text class="node-icon" x="515" y="175" text-anchor="middle">📦</text>
+                                <text class="node-label" x="515" y="195" text-anchor="middle">外壳/结构件</text>
+                                <text class="node-sublabel" x="515" y="205" text-anchor="middle">零部件</text>
+                            </g>
+
+                            <g class="chain-node-group" data-chain="steel" data-node="machine"
+                               data-info='{"name":"整机","price":"¥3,800/台","inventory":"25天","utilization":"73%","workRate":"68%"}'>
+                                <rect class="node-bg steel" x="630" y="150" width="70" height="60" rx="8"/>
+                                <text class="node-icon" x="665" y="175" text-anchor="middle">🖥️</text>
+                                <text class="node-label" x="665" y="195" text-anchor="middle">整机</text>
+                                <text class="node-sublabel" x="665" y="205" text-anchor="middle">制造</text>
+                            </g>
+
+                            <g class="chain-node-group" data-chain="steel" data-node="retail2"
+                               data-info='{"name":"零售","price":"含溢价12%","inventory":"—","utilization":"—","workRate":"—"}'>
+                                <rect class="node-bg steel" x="780" y="150" width="70" height="60" rx="8"/>
+                                <text class="node-icon" x="815" y="175" text-anchor="middle">🏪</text>
+                                <text class="node-label" x="815" y="195" text-anchor="middle">零售</text>
+                                <text class="node-sublabel" x="815" y="205" text-anchor="middle">终端</text>
+                            </g>
+                        </g>
+
+                        <!-- 塑料产业链 -->
+                        <g class="plastic-chain">
+                            <!-- 连线 -->
+                            <path class="chain-line plastic-line flow-line" 
+                                  d="M100,280 L180,280" marker-end="url(#arrowOrange)"/>
+                            <path class="chain-line plastic-line flow-line" 
+                                  d="M250,280 L330,280" marker-end="url(#arrowOrange)"/>
+                            <path class="chain-line plastic-line flow-line" 
+                                  d="M400,280 L480,280" marker-end="url(#arrowOrange)"/>
+                            <path class="chain-line plastic-line flow-line" 
+                                  d="M550,280 L630,280" marker-end="url(#arrowOrange)"/>
+                            <path class="chain-line plastic-line flow-line" 
+                                  d="M700,280 L780,280" marker-end="url(#arrowOrange)"/>
+                            <path class="chain-line plastic-line flow-line" 
+                                  d="M850,280 L930,280" marker-end="url(#arrowOrange)"/>
+
+                            <!-- 节点组 -->
+                            <g class="chain-node-group" data-chain="plastic" data-node="oil"
+                               data-info='{"name":"原油开采","price":"¥580/桶","inventory":"28天","utilization":"65%","workRate":"60%"}'>
+                                <rect class="node-bg plastic" x="30" y="250" width="70" height="60" rx="8"/>
+                                <text class="node-icon" x="65" y="275" text-anchor="middle">🛢️</text>
+                                <text class="node-label" x="65" y="295" text-anchor="middle">原油开采</text>
+                                <text class="node-sublabel" x="65" y="305" text-anchor="middle">上游</text>
+                            </g>
+
+                            <g class="chain-node-group" data-chain="plastic" data-node="cracking"
+                               data-info='{"name":"石化裂解","price":"¥8,500/吨","inventory":"10天","utilization":"88%","workRate":"85%"}'>
+                                <rect class="node-bg plastic" x="180" y="250" width="70" height="60" rx="8"/>
+                                <text class="node-icon" x="215" y="275" text-anchor="middle">⚗️</text>
+                                <text class="node-label" x="215" y="295" text-anchor="middle">石化裂解</text>
+                                <text class="node-sublabel" x="215" y="305" text-anchor="middle">中游</text>
+                            </g>
+
+                            <g class="chain-node-group" data-chain="plastic" data-node="particle"
+                               data-info='{"name":"PP/PE粒子","price":"¥9,200/吨","inventory":"16天","utilization":"81%","workRate":"77%"}'>
+                                <rect class="node-bg plastic" x="330" y="250" width="70" height="60" rx="8"/>
+                                <text class="node-icon" x="365" y="275" text-anchor="middle">💎</text>
+                                <text class="node-label" x="365" y="295" text-anchor="middle">PP/PE粒子</text>
+                                <text class="node-sublabel" x="365" y="305" text-anchor="middle">原料</text>
+                            </g>
+
+                            <g class="chain-node-group" data-chain="plastic" data-node="parts"
+                               data-info='{"name":"塑料件","price":"¥12,500/吨","inventory":"12天","utilization":"84%","workRate":"80%"}'>
+                                <rect class="node-bg plastic" x="480" y="250" width="70" height="60" rx="8"/>
+                                <text class="node-icon" x="515" y="275" text-anchor="middle">🧩</text>
+                                <text class="node-label" x="515" y="295" text-anchor="middle">塑料件</text>
+                                <text class="node-sublabel" x="515" y="305" text-anchor="middle">零部件</text>
+                            </g>
+
+                            <g class="chain-node-group" data-chain="plastic" data-node="appliance"
+                               data-info='{"name":"小家电","price":"¥580/台","inventory":"30天","utilization":"70%","workRate":"65%"}'>
+                                <rect class="node-bg plastic" x="630" y="250" width="70" height="60" rx="8"/>
+                                <text class="node-icon" x="665" y="275" text-anchor="middle">🧴</text>
+                                <text class="node-label" x="665" y="295" text-anchor="middle">小家电</text>
+                                <text class="node-sublabel" x="665" y="305" text-anchor="middle">终端</text>
+                            </g>
+
+                            <g class="chain-node-group" data-chain="plastic" data-node="retail3"
+                               data-info='{"name":"零售","price":"含溢价18%","inventory":"—","utilization":"—","workRate":"—"}'>
+                                <rect class="node-bg plastic" x="780" y="250" width="70" height="60" rx="8"/>
+                                <text class="node-icon" x="815" y="275" text-anchor="middle">🏪</text>
+                                <text class="node-label" x="815" y="295" text-anchor="middle">零售</text>
+                                <text class="node-sublabel" x="815" y="305" text-anchor="middle">终端</text>
+                            </g>
+                        </g>
+
+                        <!-- 流动粒子 -->
+                        <circle class="flow-particle copper-particle" r="4" fill="#C8963E">
+                            <animateMotion dur="2s" repeatCount="indefinite" path="M100,80 L180,80 L250,80 L330,80 L400,80 L480,80 L550,80 L630,80 L700,80 L780,80 L850,80 L930,80"/>
+                        </circle>
+                        <circle class="flow-particle steel-particle" r="4" fill="#3A8BC7">
+                            <animateMotion dur="2.5s" repeatCount="indefinite" path="M100,180 L180,180 L250,180 L330,180 L400,180 L480,180 L550,180 L630,180 L700,180 L780,180 L850,180 L930,180"/>
+                        </circle>
+                        <circle class="flow-particle plastic-particle" r="4" fill="#E8712B">
+                            <animateMotion dur="3s" repeatCount="indefinite" path="M100,280 L180,280 L250,280 L330,280 L400,280 L480,280 L550,280 L630,280 L700,280 L780,280 L850,280 L930,280"/>
+                        </circle>
+                    </svg>
+                    
+                    <!-- 节点详情浮窗 -->
+                    <div class="node-tooltip" id="nodeTooltip">
+                        <div class="tooltip-header">
+                            <div class="tooltip-icon copper" id="tooltipIcon">⚙️</div>
+                            <div>
+                                <div class="tooltip-name" id="tooltipName">压缩机</div>
+                                <div class="tooltip-chain" id="tooltipChain">铜产业链</div>
+                            </div>
+                        </div>
+                        <div class="tooltip-stats">
+                            <div class="tooltip-stat">
+                                <div class="tooltip-stat-label">价格</div>
+                                <div class="tooltip-stat-value neutral" id="tooltipPrice">¥2,850/台</div>
+                            </div>
+                            <div class="tooltip-stat">
+                                <div class="tooltip-stat-label">库存</div>
+                                <div class="tooltip-stat-value down" id="tooltipInventory">8天 ⚠️</div>
+                            </div>
+                            <div class="tooltip-stat">
+                                <div class="tooltip-stat-label">产能利用率</div>
+                                <div class="tooltip-stat-value" id="tooltipUtilization">92%</div>
+                            </div>
+                            <div class="tooltip-stat">
+                                <div class="tooltip-stat-label">开工率</div>
+                                <div class="tooltip-stat-value" id="tooltipWorkRate">88%</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 10px; font-size: 10px; color: var(--gold); text-align: center; cursor: pointer;">
+                            点击查看详情 →
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 供需信号仪表盘 + 传导分析 -->
+            <div class="panel-row grid-7-5">
+                <!-- 供需信号仪表盘 -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <div class="panel-icon">📊</div>
+                            <h3>供需信号仪表盘</h3>
+                        </div>
+                        <span class="panel-tag">实时</span>
+                    </div>
+                    <div class="signal-grid">
+                        <div class="signal-card">
+                            <div class="signal-header">
+                                <span class="signal-name">
+                                    <span class="signal-dot normal"></span>
+                                    压缩机
+                                </span>
+                                <span class="signal-arrow up">↑ 3.2%</span>
+                            </div>
+                            <div class="signal-value">¥2,850</div>
+                            <div class="signal-bars">
+                                <div class="signal-bar">
+                                    <div class="signal-bar-fill copper" style="width: 92%;"></div>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 9px; color: var(--text-hint); margin-top: 4px;">
+                                <span>库存: 低</span>
+                                <span>利用率: 92%</span>
+                            </div>
+                        </div>
+
+                        <div class="signal-card">
+                            <div class="signal-header">
+                                <span class="signal-name">
+                                    <span class="signal-dot high"></span>
+                                    铜冶炼
+                                </span>
+                                <span class="signal-arrow up">↑ 1.8%</span>
+                            </div>
+                            <div class="signal-value">¥68,200</div>
+                            <div class="signal-bars">
+                                <div class="signal-bar">
+                                    <div class="signal-bar-fill copper" style="width: 85%;"></div>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 9px; color: var(--text-hint); margin-top: 4px;">
+                                <span>库存: 正常</span>
+                                <span>利用率: 85%</span>
+                            </div>
+                        </div>
+
+                        <div class="signal-card">
+                            <div class="signal-header">
+                                <span class="signal-name">
+                                    <span class="signal-dot normal"></span>
+                                    冷轧/热轧
+                                </span>
+                                <span class="signal-arrow neutral">→ 0.2%</span>
+                            </div>
+                            <div class="signal-value">¥4,650</div>
+                            <div class="signal-bars">
+                                <div class="signal-bar">
+                                    <div class="signal-bar-fill steel" style="width: 82%;"></div>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 9px; color: var(--text-hint); margin-top: 4px;">
+                                <span>库存: 正常</span>
+                                <span>利用率: 82%</span>
+                            </div>
+                        </div>
+
+                        <div class="signal-card">
+                            <div class="signal-header">
+                                <span class="signal-name">
+                                    <span class="signal-dot low"></span>
+                                    PP/PE粒子
+                                </span>
+                                <span class="signal-arrow down">↓ 2.1%</span>
+                            </div>
+                            <div class="signal-value">¥9,200</div>
+                            <div class="signal-bars">
+                                <div class="signal-bar">
+                                    <div class="signal-bar-fill plastic" style="width: 81%;"></div>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 9px; color: var(--text-hint); margin-top: 4px;">
+                                <span>库存: 正常</span>
+                                <span>利用率: 81%</span>
+                            </div>
+                        </div>
+
+                        <div class="signal-card">
+                            <div class="signal-header">
+                                <span class="signal-name">
+                                    <span class="signal-dot normal"></span>
+                                    石化裂解
+                                </span>
+                                <span class="signal-arrow up">↑ 0.8%</span>
+                            </div>
+                            <div class="signal-value">¥8,500</div>
+                            <div class="signal-bars">
+                                <div class="signal-bar">
+                                    <div class="signal-bar-fill plastic" style="width: 88%;"></div>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 9px; color: var(--text-hint); margin-top: 4px;">
+                                <span>库存: 正常</span>
+                                <span>利用率: 88%</span>
+                            </div>
+                        </div>
+
+                        <div class="signal-card">
+                            <div class="signal-header">
+                                <span class="signal-name">
+                                    <span class="signal-dot high"></span>
+                                    铁矿开采
+                                </span>
+                                <span class="signal-arrow down">↓ 1.5%</span>
+                            </div>
+                            <div class="signal-value">¥920</div>
+                            <div class="signal-bars">
+                                <div class="signal-bar">
+                                    <div class="signal-bar-fill steel" style="width: 68%;"></div>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 9px; color: var(--text-hint); margin-top: 4px;">
+                                <span>库存: 正常</span>
+                                <span>利用率: 68%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 成本影响仪表 -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <div class="panel-icon">💰</div>
+                            <h3>整机成本影响</h3>
+                        </div>
+                    </div>
+                    <div class="cost-meter">
+                        <div class="meter-ring">
+                            <svg viewBox="0 0 120 120">
+                                <circle class="meter-track" cx="60" cy="60" r="50"/>
+                                <circle class="meter-fill" id="meterFill" cx="60" cy="60" r="50"/>
+                            </svg>
+                            <div class="meter-value">
+                                <span class="meter-num" id="meterNum">+8.2%</span>
+                                <span class="meter-label">成本涨幅</span>
+                            </div>
+                        </div>
+                        <div class="cost-breakdown">
+                            <div class="cost-item">
+                                <span class="cost-name">铜原材料</span>
+                                <span class="cost-value copper">+3.1%</span>
+                            </div>
+                            <div class="cost-item">
+                                <span class="cost-name">钢原材料</span>
+                                <span class="cost-value steel">+2.4%</span>
+                            </div>
+                            <div class="cost-item">
+                                <span class="cost-name">塑料原材料</span>
+                                <span class="cost-value plastic">+2.7%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 传导分析面板 + 瓶颈识别 -->
+            <div class="panel-row grid-2">
+                <!-- 传导分析面板 -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <div class="panel-icon">🔄</div>
+                            <h3>价格传导分析</h3>
+                        </div>
+                        <span class="panel-tag">模拟</span>
+                    </div>
+                    <div class="transmission-selector">
+                        <div class="selector-label">选择上游冲击事件：</div>
+                        <div class="selector-row">
+                            <button class="selector-btn active" data-event="copper-supply">铜矿供应 -5%</button>
+                            <button class="selector-btn" data-event="steel-price">钢材价格 +8%</button>
+                            <button class="selector-btn" data-event="plastic-shortage">塑料粒子 -10%</button>
+                        </div>
+                    </div>
+                    <div class="transmission-result">
+                        <div class="result-header">
+                            <span class="result-title">铜矿供应 -5% 传导路径</span>
+                            <span class="result-impact high" id="totalImpact">最终影响: +4.2%</span>
+                        </div>
+                        <div class="impact-chain">
+                            <div class="impact-step">
+                                <div class="impact-node">铜矿开采</div>
+                                <span class="impact-arrow">→</span>
+                                <div class="impact-bar-container">
+                                    <div class="impact-bar strong" id="step1" style="width: 100%;"></div>
+                                </div>
+                                <span class="impact-value high" id="val1">-5.0%</span>
+                            </div>
+                            <div class="impact-step">
+                                <div class="impact-node">铜冶炼</div>
+                                <span class="impact-arrow">→</span>
+                                <div class="impact-bar-container">
+                                    <div class="impact-bar strong" id="step2" style="width: 85%;"></div>
+                                </div>
+                                <span class="impact-value high" id="val2">-4.3%</span>
+                            </div>
+                            <div class="impact-step">
+                                <div class="impact-node">铜管/铜线</div>
+                                <span class="impact-arrow">→</span>
+                                <div class="impact-bar-container">
+                                    <div class="impact-bar medium" id="step3" style="width: 65%;"></div>
+                                </div>
+                                <span class="impact-value medium" id="val3">-3.2%</span>
+                            </div>
+                            <div class="impact-step">
+                                <div class="impact-node">压缩机</div>
+                                <span class="impact-arrow">→</span>
+                                <div class="impact-bar-container">
+                                    <div class="impact-bar medium" id="step4" style="width: 55%;"></div>
+                                </div>
+                                <span class="impact-value medium" id="val4">-2.8%</span>
+                            </div>
+                            <div class="impact-step">
+                                <div class="impact-node">空调/冰箱</div>
+                                <span class="impact-arrow">→</span>
+                                <div class="impact-bar-container">
+                                    <div class="impact-bar weak" id="step5" style="width: 42%;"></div>
+                                </div>
+                                <span class="impact-value low" id="val5">-2.1%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 瓶颈识别 -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <div class="panel-icon">⚠️</div>
+                            <h3>瓶颈识别</h3>
+                        </div>
+                        <span class="panel-tag">预警</span>
+                    </div>
+                    <div class="bottleneck-list">
+                        <div class="bottleneck-item">
+                            <div class="bottleneck-icon">⚙️</div>
+                            <div class="bottleneck-info">
+                                <div class="bottleneck-name">压缩机产能</div>
+                                <div class="bottleneck-reason">库存天数仅8天，产能利用率达92%，接近上限</div>
+                            </div>
+                            <div class="bottleneck-severity">
+                                <span class="severity-badge critical">严重</span>
+                                <span class="severity-value">92%</span>
+                            </div>
+                        </div>
+
+                        <div class="bottleneck-item">
+                            <div class="bottleneck-icon">🔥</div>
+                            <div class="bottleneck-info">
+                                <div class="bottleneck-name">铜冶炼开工率</div>
+                                <div class="bottleneck-reason">当前开工率82%，受环保限产影响</div>
+                            </div>
+                            <div class="bottleneck-severity">
+                                <span class="severity-badge warning">预警</span>
+                                <span class="severity-value">82%</span>
+                            </div>
+                        </div>
+
+                        <div class="bottleneck-item">
+                            <div class="bottleneck-icon">⚗️</div>
+                            <div class="bottleneck-info">
+                                <div class="bottleneck-name">石化裂解产能</div>
+                                <div class="bottleneck-reason">乙烯装置检修，PP/PE供应偏紧</div>
+                            </div>
+                            <div class="bottleneck-severity">
+                                <span class="severity-badge warning">预警</span>
+                                <span class="severity-value">88%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bottleneck-trend">
+                        <div class="trend-header">
+                            <span class="trend-title">瓶颈指数趋势</span>
+                            <select class="trend-select">
+                                <option>近7天</option>
+                                <option>近30天</option>
+                            </select>
+                        </div>
+                        <div class="trend-chart">
+                            <svg id="bottleneckChart" viewBox="0 0 400 100" preserveAspectRatio="none">
+                                <defs>
+                                    <linearGradient id="trendGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#E8712B;stop-opacity:0.3"/>
+                                        <stop offset="100%" style="stop-color:#E8712B;stop-opacity:0"/>
+                                    </linearGradient>
+                                </defs>
+                                <path d="M0,100 L0,60 Q50,55 100,50 T200,45 T300,30 T350,35 T400,25 L400,100 Z" fill="url(#trendGrad)"/>
+                                <path d="M0,60 Q50,55 100,50 T200,45 T300,30 T350,35 T400,25" fill="none" stroke="#E8712B" stroke-width="2"/>
+                                <circle cx="400" cy="25" r="4" fill="#E8712B"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 更新时间
+        function updateTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleString('zh-CN', {
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('currentTime').textContent = timeStr;
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+
+        // 节点浮窗交互
+        const tooltip = document.getElementById('nodeTooltip');
+        const nodeGroups = document.querySelectorAll('.chain-node-group');
+
+        const chainNames = {
+            copper: '铜产业链',
+            steel: '钢产业链',
+            plastic: '塑料产业链'
+        };
+
+        const chainIcons = {
+            copper: '⚙️',
+            steel: '🏭',
+            plastic: '🧪'
+        };
+
+        nodeGroups.forEach(group => {
+            group.addEventListener('mouseenter', function(e) {
+                const info = JSON.parse(this.dataset.info);
+                const chain = this.dataset.chain;
+                
+                document.getElementById('tooltipName').textContent = info.name;
+                document.getElementById('tooltipChain').textContent = chainNames[chain];
+                document.getElementById('tooltipIcon').textContent = chainIcons[chain];
+                document.getElementById('tooltipIcon').className = 'tooltip-icon ' + chain;
+                document.getElementById('tooltipPrice').textContent = info.price;
+                
+                // 库存状态
+                const invEl = document.getElementById('tooltipInventory');
+                invEl.textContent = info.inventory === '—' ? '—' : info.inventory;
+                if (info.inventory !== '—') {
+                    const days = parseInt(info.inventory);
+                    invEl.className = 'tooltip-stat-value ' + (days < 10 ? 'down' : 'neutral');
+                    if (days < 10) invEl.textContent += ' ⚠️';
+                } else {
+                    invEl.className = 'tooltip-stat-value neutral';
+                }
+                
+                document.getElementById('tooltipUtilization').textContent = info.utilization === '—' ? '—' : info.utilization;
+                document.getElementById('tooltipWorkRate').textContent = info.workRate === '—' ? '—' : info.workRate;
+                
+                // 定位
+                const rect = this.getBoundingClientRect();
+                const containerRect = document.querySelector('.chain-svg-container').getBoundingClientRect();
+                
+                tooltip.style.left = (rect.right - containerRect.left + 10) + 'px';
+                tooltip.style.top = (rect.top - containerRect.top) + 'px';
+                tooltip.classList.add('show');
+            });
+
+            group.addEventListener('mouseleave', function() {
+                tooltip.classList.remove('show');
+            });
+
+            group.addEventListener('click', function() {
+                const node = this.dataset.node;
+                window.location.href = 'supply-chain-detail.html?node=' + node;
+            });
+        });
+
+        // 传导分析交互
+        const selectorBtns = document.querySelectorAll('.selector-btn');
+        
+        const transmissionData = {
+            'copper-supply': {
+                steps: [100, 85, 65, 55, 42],
+                values: ['-5.0%', '-4.3%', '-3.2%', '-2.8%', '-2.1%'],
+                levels: ['high', 'high', 'medium', 'medium', 'low'],
+                total: '+4.2%'
+            },
+            'steel-price': {
+                steps: [100, 80, 60, 48, 35],
+                values: ['+8.0%', '+6.4%', '+4.8%', '+3.8%', '+2.8%'],
+                levels: ['high', 'high', 'medium', 'medium', 'low'],
+                total: '+2.8%'
+            },
+            'plastic-shortage': {
+                steps: [100, 78, 55, 40, 28],
+                values: ['-10.0%', '-7.8%', '-5.5%', '-4.0%', '-2.8%'],
+                levels: ['high', 'high', 'medium', 'medium', 'low'],
+                total: '+2.8%'
+            }
+        };
+
+        selectorBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                selectorBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                const event = this.dataset.event;
+                const data = transmissionData[event];
+                
+                // 更新影响值
+                for (let i = 1; i <= 5; i++) {
+                    document.getElementById('step' + i).style.width = data.steps[i-1] + '%';
+                    document.getElementById('step' + i).className = 'impact-bar ' + data.levels[i-1];
+                    document.getElementById('val' + i).textContent = data.values[i-1];
+                    document.getElementById('val' + i).className = 'impact-value ' + data.levels[i-1];
+                }
+                
+                document.getElementById('totalImpact').textContent = '最终影响: ' + data.total;
+            });
+        });
+
+        // 成本仪表动画
+        function animateMeter() {
+            const fill = document.getElementById('meterFill');
+            const num = document.getElementById('meterNum');
+            const target = 68; // 百分比位置
+            
+            setTimeout(() => {
+                fill.style.strokeDashoffset = 314 * (1 - target / 100);
+            }, 300);
+        }
+        animateMeter();
+    </script>
+</body>
+</html>

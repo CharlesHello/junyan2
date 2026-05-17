@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>钧衍智研OPC - 家电制造业大宗商品AI预测平台</title>
+    <style>
+        /* ============================================
+           CSS变量 - 严格的色彩层级
+           ============================================ */
+        :root {
+            /* 品牌色 */
+            --gold: #C8963E;
+            --gold-light: #E8C56A;
+            --gold-dim: #6B5A30;
+            --blue: #1B4D7A;
+            --blue-light: #3A8BC7;
+            --orange: #E8712B;
+            
+            /* 背景 */
+            --bg-deep: #060D18;
+            --bg-base: #0A1424;
+            --bg-card: #0F1D32;
+            --bg-hover: #152640;
+            --bg-raised: #1A3050;
+            
+            /* 文字 - 严格层级 */
+            --text-max: #FFFFFF;
+            --text-pri: #E0E6EC;
+            --text-sec: #8899AA;
+            --text-dim: #556677;
+            --text-hint: #334455;
+            
+            /* 功能色 */
+            --up: #22C55E;
+            --up-bg: rgba(34, 197, 94, 0.12);
+            --down: #EF4444;
+            --down-bg: rgba(239, 68, 68, 0.12);
+            --warn: #F59E0B;
+            --warn-bg: rgba(245, 158, 11, 0.12);
+            
+            /* 分隔 */
+            --line: rgba(200, 150, 62, 0.1);
+            --line-strong: rgba(200, 150, 62, 0.2);
+            
+            /* 阴影 */
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            --glow: 0 0 25px rgba(200, 150, 62, 0.15);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        a { text-decoration: none; color: inherit; }
+        a:hover { text-decoration: none; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-base);
+            color: var(--text-pri);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        /* ============================================
+           整体布局 - 经典Dashboard
+           ============================================ */
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* 左侧边栏 - 固定宽度，图标导航 */
+        .sidebar {
+            width: 72px;
+            background: var(--bg-deep);
+            border-right: 1px solid var(--line);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 100;
+        }
+
+        .sidebar-logo {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--bg-deep);
+            margin-bottom: 32px;
+            box-shadow: var(--glow);
+            cursor: pointer;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .nav-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .nav-btn:hover {
+            background: rgba(200, 150, 62, 0.1);
+        }
+
+        .nav-btn.active {
+            background: rgba(200, 150, 62, 0.15);
+        }
+
+        .nav-btn.active::before {
+            content: '';
+            position: absolute;
+            left: -12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 24px;
+            background: var(--gold);
+            border-radius: 0 3px 3px 0;
+        }
+
+        .nav-icon {
+            font-size: 22px;
+            margin-bottom: 2px;
+        }
+
+        .nav-label {
+            font-size: 10px;
+            color: var(--text-dim);
+        }
+
+        .nav-btn.active .nav-label {
+            color: var(--gold);
+        }
+
+        .sidebar-user {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--blue), var(--blue-light));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* 主内容区 */
+        .main {
+            flex: 1;
+            margin-left: 72px;
+            padding: 24px 32px;
+        }
+
+        /* 顶部栏 */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+        }
+
+        .header-left h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-max);
+            margin-bottom: 4px;
+        }
+
+        .header-left p {
+            font-size: 13px;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--up);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .user-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--line);
+            border-radius: 24px;
+        }
+
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--blue), var(--blue-light));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .user-info {
+            font-size: 13px;
+            color: var(--text-sec);
+        }
+
+        .user-info strong {
+            color: var(--gold);
+            font-weight: 500;
+        }
+
+        .notif-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-card);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .notif-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: var(--text-sec);
+        }
+
+        .notif-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 8px;
+            height: 8px;
+            background: var(--down);
+            border-radius: 50%;
+        }
+
+        /* ============================================
+           首屏 - 一级信息：最核心
+           ============================================ */
+        .hero-row {
+            display: grid;
+            grid-template-columns: 1fr 2.5fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        /* 综合成本指数 - Hero焦点 */
+        .index-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .index-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--gold), var(--gold-light), var(--gold));
+        }
+
+        .index-ring {
+            width: 160px;
+            height: 160px;
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .index-ring svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+
+        .index-ring .track {
+            fill: none;
+            stroke: rgba(200, 150, 62, 0.1);
+            stroke-width: 10;
+        }
+
+        .index-ring .fill {
+            fill: none;
+            stroke: url(#goldGrad);
+            stroke-width: 10;
+            stroke-linecap: round;
+            stroke-dasharray: 400;
+            stroke-dashoffset: 100;
+            transition: stroke-dashoffset 2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .index-value {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .index-num {
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--gold);
+            line-height: 1;
+            letter-spacing: -2px;
+        }
+
+        .index-label {
+            font-size: 12px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        .index-change {
+            display: flex;
+            gap: 24px;
+        }
+
+        .change-item {
+            text-align: center;
+        }
+
+        .change-val {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .change-val.up { color: var(--up); }
+        .change-val.down { color: var(--down); }
+        .change-val.neutral { color: var(--text-pri); }
+
+        .change-name {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
+
+        /* 核心品种卡片 - 5个 */
+        .price-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 16px;
+        }
+
+        .price-card {
+            background: var(--bg-card);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .price-card:hover {
+            background: var(--bg-hover);
+            border-color: var(--gold);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow), var(--glow);
+        }
+
+        .price-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .price-name {
+            font-size: 13px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .price-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(200, 150, 62, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .price-main {
+            margin-bottom: 10px;
+        }
+
+        .price-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-max);
+            letter-spacing: -0.5px;
+        }
+
+        .price-unit {
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        .price-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .price-highlow {
+            font-size: 10px;
+            color: var(--text-dim);
+        }
+
+        .price-change {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .price-change.up {
+            background: var(--up-bg);
+            color: var(--up);
+        }
+
+        .price-change.down {
+            background: var(--down-bg);
+            color: var(--down);
+        }
+
+        .price-change.neutral {
+            background: rgba(136, 136, 136, 0.1);
+            color: var(--text-sec);
+        }
+
+        .ai-tag {
+            font-size: 11px;
+            font-weight: 500;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        .ai-tag.bull { color: var(--up); background: var(--up-bg); }
+        .ai-tag.bear { color: var(--down); background: var(--down-bg); }
+        .ai-tag.neutral { color: var(--warn); background: var(--warn-bg); }
+
+        /* ============================================
+           快捷入口区
+           ============================================ */
+        .quick-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .quick-card {
+            background: var(--bg-card);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 24px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .quick-card:hover {
+            background: var(--bg-hover);
+            border-color: var(--gold);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow), var(--glow);
+        }
+
+        .quick-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            flex-shrink: 0;
+        }
+
+        .quick-icon.ai {
+            background: linear-gradient(135deg, rgba(200, 150, 62, 0.2), rgba(200, 150, 62, 0.05));
+        }
+
+        .quick-icon.chain {
+            background: linear-gradient(135deg, rgba(58, 139, 199, 0.2), rgba(58, 139, 199, 0.05));
+        }
+
+        .quick-icon.risk {
+            background: linear-gradient(135deg, rgba(232, 113, 43, 0.2), rgba(232, 113, 43, 0.05));
+        }
+
+        .quick-info h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-max);
+            margin-bottom: 6px;
+        }
+
+        .quick-info p {
+            font-size: 12px;
+            color: var(--text-dim);
+            line-height: 1.4;
+        }
+
+        /* ============================================
+           二级信息区 - 网格布局
+           ============================================ */
+        .grid-row {
+            display: grid;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .grid-2 { grid-template-columns: 1fr 1fr; }
+        .grid-3 { grid-template-columns: 2fr 1fr 1fr; }
+
+        /* 通用卡片 */
+        .panel {
+            background: var(--bg-card);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 22px;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .panel-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(200, 150, 62, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .panel-title h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-pri);
+        }
+
+        .panel-tag {
+            font-size: 11px;
+            color: var(--gold);
+            background: rgba(200, 150, 62, 0.1);
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+
+        .panel-link {
+            font-size: 12px;
+            color: var(--blue-light);
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .panel-link:hover {
+            color: var(--gold);
+        }
+
+        /* 预警摘要列表 */
+        .alert-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .alert-item {
+            padding: 14px;
+            background: rgba(232, 113, 43, 0.06);
+            border: 1px solid rgba(232, 113, 43, 0.15);
+            border-left: 3px solid;
+            border-radius: 8px;
+        }
+
+        .alert-item.orange { border-left-color: var(--orange); }
+        .alert-item.yellow { border-left-color: var(--warn); }
+        .alert-item.green { border-left-color: var(--up); }
+
+        .alert-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .alert-name {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .alert-level-badge {
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        .alert-level-badge.high { color: var(--down); background: var(--down-bg); }
+        .alert-level-badge.medium { color: var(--orange); background: rgba(232, 113, 43, 0.1); }
+        .alert-level-badge.low { color: var(--warn); background: var(--warn-bg); }
+
+        .alert-desc {
+            font-size: 12px;
+            color: var(--text-sec);
+        }
+
+        /* 简报卡片 */
+        .briefing-preview {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .briefing-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px;
+            background: var(--bg-hover);
+            border-radius: 8px;
+        }
+
+        .briefing-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--gold);
+            border-radius: 50%;
+            margin-top: 5px;
+            flex-shrink: 0;
+        }
+
+        .briefing-text {
+            font-size: 12px;
+            color: var(--text-sec);
+            line-height: 1.5;
+        }
+
+        .briefing-time {
+            font-size: 11px;
+            color: var(--text-hint);
+            margin-top: 4px;
+        }
+
+        /* 侧栏小卡片 */
+        .side-stat {
+            padding: 14px 0;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .side-stat:last-child { border-bottom: none; }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .stat-value.up { color: var(--down); }
+        .stat-value.down { color: var(--up); }
+        .stat-value.neutral { color: var(--warn); }
+
+        /* 政策动态 */
+        .policy-box {
+            background: linear-gradient(135deg, rgba(27, 77, 122, 0.2), rgba(27, 77, 122, 0.05));
+            border: 1px solid var(--blue);
+            border-radius: 12px;
+            padding: 18px;
+        }
+
+        .policy-text {
+            font-size: 11px;
+            color: var(--text-sec);
+            line-height: 1.7;
+        }
+
+        .policy-text strong {
+            color: var(--text-pri);
+        }
+
+        /* ============================================
+           聊天浮窗
+           ============================================ */
+        .chat-btn {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(200, 150, 62, 0.35);
+            z-index: 200;
+            transition: transform 0.2s;
+        }
+
+        .chat-btn:hover {
+            transform: scale(1.08);
+        }
+
+        .chat-btn::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border: 2px solid var(--gold);
+            border-radius: 50%;
+            opacity: 0.4;
+            animation: breathe 2.5s ease-in-out infinite;
+        }
+
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); opacity: 0.4; }
+            50% { transform: scale(1.15); opacity: 0; }
+        }
+
+        .chat-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--bg-deep);
+        }
+
+        .chat-win {
+            position: fixed;
+            bottom: 94px;
+            right: 28px;
+            width: 360px;
+            height: 480px;
+            background: rgba(10, 20, 36, 0.97);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--line-strong);
+            border-radius: 14px;
+            display: none;
+            flex-direction: column;
+            z-index: 199;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .chat-win.show { display: flex; }
+
+        .chat-head {
+            padding: 16px 18px;
+            background: rgba(200, 150, 62, 0.05);
+            border-bottom: 1px solid var(--line);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-head-info h4 {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .chat-head-info span {
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        .chat-x {
+            width: 28px;
+            height: 28px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .chat-x svg {
+            width: 12px;
+            height: 12px;
+            fill: var(--text-sec);
+        }
+
+        .chat-body {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        .chat-msg {
+            margin-bottom: 12px;
+            animation: slideIn 0.2s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(6px); }
+        }
+
+        .chat-msg.bot {
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-avatar {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--bg-deep);
+            flex-shrink: 0;
+        }
+
+        .chat-bubble {
+            padding: 10px 14px;
+            background: var(--bg-hover);
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .chat-msg.user {
+            justify-content: flex-end;
+        }
+
+        .chat-msg.user .chat-bubble {
+            background: rgba(200, 150, 62, 0.12);
+        }
+
+        .chat-suggest {
+            padding: 12px 16px;
+            border-top: 1px solid var(--line);
+        }
+
+        .suggest-label {
+            font-size: 10px;
+            color: var(--text-hint);
+            margin-bottom: 8px;
+        }
+
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .chip {
+            padding: 5px 10px;
+            background: var(--bg-hover);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .chip:hover {
+            background: rgba(200, 150, 62, 0.1);
+            border-color: var(--gold);
+        }
+
+        .chat-input {
+            padding: 12px 16px;
+            border-top: 1px solid var(--line);
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 9px 14px;
+            background: var(--bg-hover);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            font-size: 13px;
+            color: var(--text-pri);
+            outline: none;
+        }
+
+        .chat-input input:focus {
+            border-color: var(--gold);
+        }
+
+        .chat-input input::placeholder {
+            color: var(--text-hint);
+        }
+
+        .chat-send {
+            width: 36px;
+            height: 36px;
+            background: var(--gold);
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .chat-send svg {
+            width: 14px;
+            height: 14px;
+            fill: var(--bg-deep);
+        }
+
+        /* ============================================
+           页脚
+           ============================================ */
+        .footer {
+            padding: 20px 0;
+            text-align: center;
+            border-top: 1px solid var(--line);
+            margin-top: 24px;
+        }
+
+        .footer p {
+            font-size: 11px;
+            color: var(--text-hint);
+        }
+
+        /* ============================================
+           滚动条
+           ============================================ */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <!-- SVG渐变 -->
+    <svg style="position:absolute;width:0;height:0;">
+        <defs>
+            <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#C8963E"/>
+                <stop offset="50%" stop-color="#E8C56A"/>
+                <stop offset="100%" stop-color="#C8963E"/>
+            </linearGradient>
+        </defs>
+    </svg>
+
+    <!-- ============================================
+         整体布局
+         ============================================ -->
+    <div class="app">
+        <!-- 左侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-logo" onclick="location.href='index.html'">衍</div>
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-btn active">
+                    <span class="nav-icon">🏠</span>
+                    <span class="nav-label">首页</span>
+                </a>
+                <a href="market.html" class="nav-btn">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-label">行情</span>
+                </a>
+                <a href="supply-chain.html" class="nav-btn">
+                    <span class="nav-icon">🔗</span>
+                    <span class="nav-label">产业链</span>
+                </a>
+                <a href="prediction.html" class="nav-btn">
+                    <span class="nav-icon">🧠</span>
+                    <span class="nav-label">AI预测</span>
+                </a>
+                <a href="alert.html" class="nav-btn">
+                    <span class="nav-icon">🔔</span>
+                    <span class="nav-label">预警</span>
+                </a>
+                <a href="briefing.html" class="nav-btn">
+                    <span class="nav-icon">📰</span>
+                    <span class="nav-label">简报</span>
+                </a>
+            </nav>
+            <div class="sidebar-user">采</div>
+        </aside>
+
+        <!-- 主内容 -->
+        <main class="main">
+            <!-- 顶部栏 -->
+            <header class="header">
+                <div class="header-left">
+                    <h1>钧衍智研 OPC</h1>
+                    <p>
+                        <span class="live-dot"></span>
+                        家电制造业 · 大宗商品AI预测平台 · <span id="curTime">--</span>
+                    </p>
+                </div>
+                <div class="header-right">
+                    <div class="user-card">
+                        <div class="user-avatar">采</div>
+                        <div class="user-info">
+                            <strong>家电企业</strong> · 采购部
+                        </div>
+                    </div>
+                    <div class="notif-btn">
+                        <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+                        <div class="notif-badge"></div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- ============================================
+                 首屏：综合成本指数 + 核心品种
+                 ============================================ -->
+            <div class="hero-row">
+                <!-- 综合成本指数 -->
+                <div class="index-panel">
+                    <div class="index-ring">
+                        <svg viewBox="0 0 160 160">
+                            <circle class="track" cx="80" cy="80" r="64"/>
+                            <circle class="fill" cx="80" cy="80" r="64" id="progressRing"/>
+                        </svg>
+                        <div class="index-value">
+                            <span class="index-num" id="indexNum">0</span>
+                            <span class="index-label">成本指数</span>
+                        </div>
+                    </div>
+                    <div class="index-change">
+                        <div class="change-item">
+                            <div class="change-val up">+2.3%</div>
+                            <div class="change-name">铜材</div>
+                        </div>
+                        <div class="change-item">
+                            <div class="change-val down">-0.8%</div>
+                            <div class="change-name">钢材</div>
+                        </div>
+                        <div class="change-item">
+                            <div class="change-val neutral">—</div>
+                            <div class="change-name">塑料</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 核心品种价格 -->
+                <div class="price-grid" id="priceGrid"></div>
+            </div>
+
+            <!-- ============================================
+                 快捷入口区
+                 ============================================ -->
+            <div class="quick-row">
+                <div class="quick-card" onclick="location.href='prediction.html'">
+                    <div class="quick-icon ai">🧠</div>
+                    <div class="quick-info">
+                        <h3>AI价格预测</h3>
+                        <p>三层引擎智能预测未来走势，提供采购建议</p>
+                    </div>
+                </div>
+                <div class="quick-card" onclick="location.href='supply-chain.html'">
+                    <div class="quick-icon chain">🔗</div>
+                    <div class="quick-info">
+                        <h3>产业链分析</h3>
+                        <p>追踪铜/钢铁/塑料三大产业链供需信号</p>
+                    </div>
+                </div>
+                <div class="quick-card" onclick="location.href='alert.html'">
+                    <div class="quick-icon risk">🔔</div>
+                    <div class="quick-info">
+                        <h3>风险预警</h3>
+                        <p>四级预警体系，实时监控成本波动风险</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================
+                 二级信息：预警摘要 + 简报入口
+                 ============================================ -->
+            <div class="grid-row grid-2" style="margin-bottom: 24px;">
+                <!-- 预警摘要 -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <div class="panel-icon">⚠️</div>
+                            <h3>关键预警</h3>
+                        </div>
+                        <span class="panel-link" onclick="location.href='alert.html'">查看全部 →</span>
+                    </div>
+                    <div class="alert-list" id="alertList"></div>
+                </div>
+
+                <!-- 最新简报 -->
+                <div class="panel" style="cursor:pointer;" onclick="location.href='briefing.html'">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <div class="panel-icon">📰</div>
+                            <h3>今日简报</h3>
+                        </div>
+                        <span class="panel-tag">🤖 AI生成</span>
+                    </div>
+                    <div class="briefing-preview" id="briefingPreview"></div>
+                </div>
+            </div>
+
+            <!-- ============================================
+                 侧栏信息
+                 ============================================ -->
+            <div class="grid-row grid-2" style="margin-bottom: 24px;">
+                <!-- 成本测算 -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <div class="panel-icon">💹</div>
+                            <h3>成本影响测算</h3>
+                        </div>
+                    </div>
+                    <div class="side-stat">
+                        <div class="stat-label">空调单台铜材</div>
+                        <div class="stat-value up">+¥38</div>
+                    </div>
+                    <div class="side-stat">
+                        <div class="stat-label">冰箱单台钢材</div>
+                        <div class="stat-value down">-¥12</div>
+                    </div>
+                    <div class="side-stat">
+                        <div class="stat-label">洗衣机塑料</div>
+                        <div class="stat-value">±¥0</div>
+                    </div>
+                    <div class="side-stat">
+                        <div class="stat-label">综合成本</div>
+                        <div class="stat-value neutral">+1.8%</div>
+                    </div>
+                </div>
+
+                <!-- 政策动态 -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <div class="panel-icon">📜</div>
+                            <h3>政策动态</h3>
+                        </div>
+                        <span class="panel-link" onclick="location.href='briefing.html'">查看详情 →</span>
+                    </div>
+                    <div class="policy-box">
+                        <div class="policy-text">
+                            商务部等14部门联合发布《促进家电以旧换新行动方案》：
+                            <br><br>
+                            <strong>•</strong> 冰箱/洗衣机/空调等大家电补贴15%-20%
+                            <br>
+                            <strong>•</strong> 单件最高补贴2000元
+                            <br>
+                            <strong>•</strong> 预计全年带动销售5000万台
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 页脚 -->
+            <footer class="footer">
+                <p>© 2024 钧衍智研 OPC · 家电制造业大宗商品AI预测平台 · 数据仅供参考，不构成投资建议</p>
+            </footer>
+        </main>
+    </div>
+
+    <!-- ============================================
+         聊天浮窗
+         ============================================ -->
+    <div class="chat-btn" id="chatBtn">
+        <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+    </div>
+    <div class="chat-win" id="chatWin">
+        <div class="chat-head">
+            <div class="chat-head-info">
+                <h4>钧衍AI助手</h4>
+                <span>随时为您解答</span>
+            </div>
+            <div class="chat-x" id="chatX">
+                <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            </div>
+        </div>
+        <div class="chat-body" id="chatBody">
+            <div class="chat-msg bot">
+                <div class="chat-avatar">衍</div>
+                <div class="chat-bubble">您好！我是钧衍AI助手，专注于家电制造业原材料成本分析。请问有什么可以帮您？</div>
+            </div>
+        </div>
+        <div class="chat-suggest">
+            <div class="suggest-label">快捷问题</div>
+            <div class="chips">
+                <span class="chip" onclick="location.href='copper.html'">铜价走势分析</span>
+                <span class="chip" onclick="location.href='alert.html'">空调成本预警</span>
+                <span class="chip" onclick="location.href='briefing.html'">以旧换新影响</span>
+                <span class="chip" onclick="location.href='prediction.html'">采购建议</span>
+            </div>
+        </div>
+        <div class="chat-input">
+            <input type="text" placeholder="输入您的问题..." id="chatInput">
+            <button class="chat-send" id="chatSend">
+                <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- ============================================
+         JavaScript
+         ============================================ -->
+    <script>
+        // ============================================
+        // 数据
+        // ============================================
+        const PRICES = [
+            { name: '铜', price: 72300, change: 1.8, trend: 'up', icon: '🥇', ai: 'bull', aiText: '看涨', high: 72800, low: 71500, page: 'copper.html' },
+            { name: '铝', price: 18920, change: 0.6, trend: 'up', icon: '🔩', ai: 'bull', aiText: '偏强', high: 19050, low: 18780, page: 'aluminum.html' },
+            { name: '钢材', price: 4180, change: -0.4, trend: 'down', icon: '⚙️', ai: 'neutral', aiText: '震荡', high: 4220, low: 4150, page: 'steel.html' },
+            { name: '塑料', price: 8650, change: 0, trend: 'neutral', icon: '💎', ai: 'neutral', aiText: '平稳', high: 8720, low: 8580, page: 'plastic.html' },
+            { name: '不锈钢', price: 15800, change: 0.3, trend: 'up', icon: '🏭', ai: 'bull', aiText: '看涨', high: 15920, low: 15680, page: 'stainless.html' }
+        ];
+
+        const ALERTS = [
+            { name: '🟠 铜价日波动超3σ', level: 'high', levelText: '高影响', desc: '铜价单日涨幅3.2%，超3个标准差，压缩机成本上浮2.3%', color: 'orange' },
+            { name: '🟡 以旧换新政策落地', level: 'low', levelText: '提示', desc: '预计拉动空调排产+8%，需求利好但采购压力增加', color: 'yellow' },
+            { name: '🟢 LME铝库存新低', level: 'low', levelText: '提示', desc: '库存降至52万吨，Q3铝材锁价窗口显现', color: 'green' }
+        ];
+
+        const BRIEFINGS = [
+            '铜价突破7.2万/吨，刷新年内高点，空调压缩机成本压力持续',
+            '以旧换新细则落地，家电回收补贴最高2000元，预计拉动空调排产+8%',
+            'LME铝库存降至52万吨新低，铝材采购需关注锁价窗口'
+        ];
+
+        // ============================================
+        // 工具
+        // ============================================
+        const fmt = n => n.toLocaleString('zh-CN');
+
+        // ============================================
+        // 渲染
+        // ============================================
+        function renderPrices() {
+            const g = document.getElementById('priceGrid');
+            g.innerHTML = PRICES.map(p => `
+                <div class="price-card" onclick="location.href='${p.page}'">
+                    <div class="price-header">
+                        <span class="price-name">${p.name}</span>
+                        <div class="price-icon">${p.icon}</div>
+                    </div>
+                    <div class="price-main">
+                        <div class="price-value">${fmt(p.price)}</div>
+                        <div class="price-unit">元/吨</div>
+                    </div>
+                    <div class="price-meta">
+                        <span class="price-highlow">高${p.high >= 10000 ? (p.high/10000).toFixed(1)+'万' : p.high} 低${p.low >= 10000 ? (p.low/10000).toFixed(1)+'万' : p.low}</span>
+                    </div>
+                    <div class="price-change ${p.trend}">
+                        ${p.trend === 'up' ? '↑' : p.trend === 'down' ? '↓' : '→'} ${p.change > 0 ? '+' : ''}${p.change}%
+                    </div>
+                    <div class="price-tags" style="margin-top:10px;">
+                        <span class="ai-tag ${p.ai}">${p.aiText}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderAlerts() {
+            const g = document.getElementById('alertList');
+            g.innerHTML = ALERTS.map(a => `
+                <div class="alert-item ${a.color}">
+                    <div class="alert-top">
+                        <span class="alert-name">${a.name}</span>
+                        <span class="alert-level-badge ${a.level}">${a.levelText}</span>
+                    </div>
+                    <div class="alert-desc">${a.desc}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderBriefings() {
+            const g = document.getElementById('briefingPreview');
+            g.innerHTML = BRIEFINGS.map((b, i) => `
+                <div class="briefing-item">
+                    <div class="briefing-dot"></div>
+                    <div>
+                        <div class="briefing-text">${b}</div>
+                        <div class="briefing-time">2024.01.15 · 要点${i+1}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ============================================
+        // 数字动画
+        // ============================================
+        function animIndex() {
+            const target = 128.6, dur = 1500, st = performance.now();
+            const ring = document.getElementById('progressRing');
+            function tick(now) {
+                const p = Math.min((now-st)/dur, 1);
+                const e = 1 - Math.pow(1-p, 3);
+                document.getElementById('indexNum').textContent = (target*e).toFixed(1);
+                ring.style.strokeDashoffset = 400*(1-e*0.75);
+                if (p < 1) requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+        }
+
+        // ============================================
+        // 聊天
+        // ============================================
+        function initChat() {
+            const btn = document.getElementById('chatBtn');
+            const win = document.getElementById('chatWin');
+            const x = document.getElementById('chatX');
+            const inp = document.getElementById('chatInput');
+            const snd = document.getElementById('chatSend');
+            const body = document.getElementById('chatBody');
+
+            btn.addEventListener('click', () => win.classList.toggle('show'));
+            x.addEventListener('click', () => win.classList.remove('show'));
+
+            const replies = [
+                '根据当前铜价走势，预计未来4周持续上行，建议提前锁定Q3采购量。',
+                '铜价已突破7.2万/吨，压缩机成本压力较大，建议关注套保机会。',
+                '以旧换新政策预计带动空调排产+8%，原材料采购需求将同步增加。'
+            ];
+
+            function send() {
+                const t = inp.value.trim();
+                if (!t) return;
+                body.innerHTML += `<div class="chat-msg user"><div class="chat-bubble">${t}</div></div>`;
+                inp.value = '';
+                body.scrollTop = body.scrollHeight;
+                setTimeout(() => {
+                    const r = replies[Math.floor(Math.random()*replies.length)];
+                    const m = document.createElement('div');
+                    m.className = 'chat-msg bot';
+                    m.innerHTML = `<div class="chat-avatar">衍</div><div class="chat-bubble"></div>`;
+                    body.appendChild(m);
+                    const b = m.querySelector('.chat-bubble');
+                    let i = 0;
+                    const tw = setInterval(() => {
+                        if (i < r.length) b.textContent += r.charAt(i++);
+                        else clearInterval(tw);
+                    }, 25);
+                }, 500);
+            }
+
+            snd.addEventListener('click', send);
+            inp.addEventListener('keypress', e => { if (e.key === 'Enter') send(); });
+        }
+
+        // ============================================
+        // 时间
+        // ============================================
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('curTime').textContent = now.toLocaleString('zh-CN', {
+                year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'
+            });
+        }
+
+        // ============================================
+        // 初始化
+        // ============================================
+        function init() {
+            updateTime();
+            setInterval(updateTime, 1000);
+
+            renderPrices();
+            renderAlerts();
+            renderBriefings();
+
+            initChat();
+
+            setTimeout(animIndex, 300);
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

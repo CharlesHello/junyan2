@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>行情监控 - 钧衍智研OPC</title>
+    <style>
+        /* ============================================
+           CSS变量 - 严格的色彩层级
+           ============================================ */
+        :root {
+            --gold: #C8963E;
+            --gold-light: #E8C56A;
+            --gold-dim: #6B5A30;
+            --blue: #1B4D7A;
+            --blue-light: #3A8BC7;
+            --orange: #E8712B;
+            
+            --bg-deep: #060D18;
+            --bg-base: #0A1424;
+            --bg-card: #0F1D32;
+            --bg-hover: #152640;
+            --bg-raised: #1A3050;
+            
+            --text-max: #FFFFFF;
+            --text-pri: #E0E6EC;
+            --text-sec: #8899AA;
+            --text-dim: #556677;
+            --text-hint: #334455;
+            
+            --up: #22C55E;
+            --up-bg: rgba(34, 197, 94, 0.12);
+            --down: #EF4444;
+            --down-bg: rgba(239, 68, 68, 0.12);
+            --warn: #F59E0B;
+            --warn-bg: rgba(245, 158, 11, 0.12);
+            
+            --line: rgba(200, 150, 62, 0.1);
+            --line-strong: rgba(200, 150, 62, 0.2);
+            
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            --glow: 0 0 25px rgba(200, 150, 62, 0.15);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        a { text-decoration: none; color: inherit; }
+        a:hover { text-decoration: none; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-base);
+            color: var(--text-pri);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        /* ============================================
+           整体布局
+           ============================================ */
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 72px;
+            background: var(--bg-deep);
+            border-right: 1px solid var(--line);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 100;
+        }
+
+        .sidebar-logo {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--bg-deep);
+            margin-bottom: 32px;
+            box-shadow: var(--glow);
+            cursor: pointer;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .nav-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .nav-btn:hover {
+            background: rgba(200, 150, 62, 0.1);
+        }
+
+        .nav-btn.active {
+            background: rgba(200, 150, 62, 0.15);
+        }
+
+        .nav-btn.active::before {
+            content: '';
+            position: absolute;
+            left: -12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 24px;
+            background: var(--gold);
+            border-radius: 0 3px 3px 0;
+        }
+
+        .nav-icon {
+            font-size: 22px;
+            margin-bottom: 2px;
+        }
+
+        .nav-label {
+            font-size: 10px;
+            color: var(--text-dim);
+        }
+
+        .nav-btn.active .nav-label {
+            color: var(--gold);
+        }
+
+        .sidebar-user {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--blue), var(--blue-light));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .main {
+            flex: 1;
+            margin-left: 72px;
+            padding: 24px 32px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+        }
+
+        .header-left h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-max);
+            margin-bottom: 4px;
+        }
+
+        .header-left p {
+            font-size: 13px;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--up);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .user-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--line);
+            border-radius: 24px;
+        }
+
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--blue), var(--blue-light));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .user-info {
+            font-size: 13px;
+            color: var(--text-sec);
+        }
+
+        .user-info strong {
+            color: var(--gold);
+            font-weight: 500;
+        }
+
+        /* ============================================
+           筛选器
+           ============================================ */
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-label {
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            font-size: 12px;
+            color: var(--text-sec);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        .filter-btn.active {
+            background: rgba(200, 150, 62, 0.15);
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            margin-left: auto;
+        }
+
+        .search-box input {
+            background: none;
+            border: none;
+            outline: none;
+            font-size: 12px;
+            color: var(--text-pri);
+            width: 160px;
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-hint);
+        }
+
+        .search-box svg {
+            width: 14px;
+            height: 14px;
+            fill: var(--text-dim);
+        }
+
+        /* ============================================
+           品种列表表格
+           ============================================ */
+        .panel {
+            background: var(--bg-card);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 22px;
+            margin-bottom: 24px;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .panel-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(200, 150, 62, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .panel-title h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-pri);
+        }
+
+        .panel-tag {
+            font-size: 11px;
+            color: var(--gold);
+            background: rgba(200, 150, 62, 0.1);
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+
+        .price-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .price-table th {
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .price-table td {
+            padding: 16px;
+            border-bottom: 1px solid var(--line);
+            font-size: 13px;
+        }
+
+        .price-table tr:hover td {
+            background: var(--bg-hover);
+        }
+
+        .price-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .commodity-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .commodity-icon {
+            width: 36px;
+            height: 36px;
+            background: rgba(200, 150, 62, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .commodity-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .commodity-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-max);
+        }
+
+        .commodity-code {
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        .price-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-max);
+        }
+
+        .price-unit {
+            font-size: 10px;
+            color: var(--text-dim);
+            margin-left: 4px;
+        }
+
+        .change-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .change-main {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .change-main.up { color: var(--up); }
+        .change-main.down { color: var(--down); }
+        .change-main.neutral { color: var(--text-sec); }
+
+        .change-percent {
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        .volume-cell {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .volume-value {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .volume-change {
+            font-size: 11px;
+        }
+
+        .volume-change.up { color: var(--up); }
+        .volume-change.down { color: var(--down); }
+
+        .ai-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .ai-badge.bull {
+            background: var(--up-bg);
+            color: var(--up);
+        }
+
+        .ai-badge.bear {
+            background: var(--down-bg);
+            color: var(--down);
+        }
+
+        .ai-badge.neutral {
+            background: var(--warn-bg);
+            color: var(--warn);
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            background: rgba(200, 150, 62, 0.1);
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            font-size: 11px;
+            color: var(--gold);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: rgba(200, 150, 62, 0.2);
+            border-color: var(--gold);
+        }
+
+        /* ============================================
+           热力图 - 大面积
+           ============================================ */
+        .heatmap-large {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 10px;
+        }
+
+        .heat-cell {
+            aspect-ratio: 1;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            min-height: 80px;
+        }
+
+        .heat-cell:hover {
+            transform: scale(1.05);
+            z-index: 2;
+            box-shadow: var(--shadow);
+        }
+
+        .heat-name {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .heat-val {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .heat-price {
+            font-size: 10px;
+            opacity: 0.8;
+            margin-top: 4px;
+        }
+
+        /* ============================================
+           异动排行榜 - 详细版
+           ============================================ */
+        .alert-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .alert-card {
+            padding: 18px;
+            background: rgba(232, 113, 43, 0.06);
+            border: 1px solid rgba(232, 113, 43, 0.15);
+            border-left: 4px solid;
+            border-radius: 10px;
+        }
+
+        .alert-card.orange { border-left-color: var(--orange); }
+        .alert-card.red { border-left-color: var(--down); }
+        .alert-card.yellow { border-left-color: var(--warn); }
+        .alert-card.green { border-left-color: var(--up); }
+
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .alert-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-max);
+        }
+
+        .alert-time {
+            font-size: 11px;
+            color: var(--text-hint);
+        }
+
+        .alert-body {
+            font-size: 12px;
+            color: var(--text-sec);
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .alert-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .alert-tag {
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: rgba(200, 150, 62, 0.1);
+            color: var(--gold);
+        }
+
+        .alert-level-tag {
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .alert-level-tag.high { color: var(--down); background: var(--down-bg); }
+        .alert-level-tag.medium { color: var(--orange); background: rgba(232, 113, 43, 0.1); }
+        .alert-level-tag.low { color: var(--warn); background: var(--warn-bg); }
+
+        /* ============================================
+           K线图区域
+           ============================================ */
+        .kline-section {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .kline-tabs {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .kline-tab {
+            padding: 14px 18px;
+            background: var(--bg-card);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .kline-tab:hover {
+            background: var(--bg-hover);
+            border-color: var(--gold);
+        }
+
+        .kline-tab.active {
+            background: rgba(200, 150, 62, 0.15);
+            border-color: var(--gold);
+        }
+
+        .kline-tab-icon {
+            font-size: 20px;
+        }
+
+        .kline-tab-info {
+            flex: 1;
+        }
+
+        .kline-tab-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-max);
+        }
+
+        .kline-tab-price {
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        .kline-tab-change {
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .kline-tab-change.up { color: var(--up); }
+        .kline-tab-change.down { color: var(--down); }
+
+        .kline-chart-area {
+            background: var(--bg-card);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 22px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .kline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .kline-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .kline-symbol {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-max);
+        }
+
+        .kline-price {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--gold);
+        }
+
+        .kline-meta {
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        .time-selector {
+            display: flex;
+            gap: 4px;
+        }
+
+        .time-btn {
+            padding: 6px 12px;
+            background: var(--bg-hover);
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            font-size: 11px;
+            color: var(--text-sec);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .time-btn:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        .time-btn.active {
+            background: rgba(200, 150, 62, 0.15);
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        .chart-container {
+            flex: 1;
+            min-height: 300px;
+            position: relative;
+        }
+
+        #klineChart {
+            width: 100%;
+            height: 100%;
+        }
+
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            gap: 28px;
+            margin-top: 16px;
+        }
+
+        .legend-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+        }
+
+        .legend-dot.up { background: var(--up); }
+        .legend-dot.down { background: var(--down); }
+
+        /* ============================================
+           页脚
+           ============================================ */
+        .footer {
+            padding: 20px 0;
+            text-align: center;
+            border-top: 1px solid var(--line);
+            margin-top: 24px;
+        }
+
+        .footer p {
+            font-size: 11px;
+            color: var(--text-hint);
+        }
+
+        /* ============================================
+           滚动条
+           ============================================ */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- 左侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-logo" onclick="location.href='index.html'">衍</div>
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-btn">
+                    <span class="nav-icon">🏠</span>
+                    <span class="nav-label">首页</span>
+                </a>
+                <a href="market.html" class="nav-btn active">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-label">行情</span>
+                </a>
+                <a href="supply-chain.html" class="nav-btn">
+                    <span class="nav-icon">🔗</span>
+                    <span class="nav-label">产业链</span>
+                </a>
+                <a href="prediction.html" class="nav-btn">
+                    <span class="nav-icon">🧠</span>
+                    <span class="nav-label">AI预测</span>
+                </a>
+                <a href="alert.html" class="nav-btn">
+                    <span class="nav-icon">🔔</span>
+                    <span class="nav-label">预警</span>
+                </a>
+                <a href="briefing.html" class="nav-btn">
+                    <span class="nav-icon">📰</span>
+                    <span class="nav-label">简报</span>
+                </a>
+            </nav>
+            <div class="sidebar-user">采</div>
+        </aside>
+
+        <!-- 主内容 -->
+        <main class="main">
+            <!-- 顶部栏 -->
+            <header class="header">
+                <div class="header-left">
+                    <h1>行情监控</h1>
+                    <p>
+                        <span class="live-dot"></span>
+                        实时行情数据 · <span id="curTime">--</span>
+                    </p>
+                </div>
+                <div class="header-right">
+                    <div class="user-card">
+                        <div class="user-avatar">采</div>
+                        <div class="user-info">
+                            <strong>家电企业</strong> · 采购部
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 筛选器 -->
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <span class="filter-label">品种:</span>
+                    <button class="filter-btn active" data-filter="all">全部</button>
+                    <button class="filter-btn" data-filter="metal">有色金属</button>
+                    <button class="filter-btn" data-filter="steel">钢铁</button>
+                    <button class="filter-btn" data-filter="plastic">塑料</button>
+                </div>
+                <div class="search-box">
+                    <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                    <input type="text" placeholder="搜索品种..." id="searchInput">
+                </div>
+            </div>
+
+            <!-- K线图区域 -->
+            <div class="kline-section">
+                <div class="kline-tabs" id="klineTabs"></div>
+                <div class="kline-chart-area">
+                    <div class="kline-header">
+                        <div class="kline-title">
+                            <span class="kline-symbol" id="klineSymbol">铜</span>
+                            <span class="kline-price" id="klinePrice">72,300</span>
+                            <span class="kline-meta">元/吨</span>
+                        </div>
+                        <div class="time-selector">
+                            <button class="time-btn" data-t="1D">1日</button>
+                            <button class="time-btn active" data-t="1W">1周</button>
+                            <button class="time-btn" data-t="1M">1月</button>
+                            <button class="time-btn" data-t="3M">3月</button>
+                            <button class="time-btn" data-t="1Y">1年</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="klineChart"></canvas>
+                    </div>
+                    <div class="chart-legend">
+                        <div class="legend-pill"><div class="legend-dot up"></div>K线</div>
+                        <div class="legend-pill"><div class="legend-dot down"></div>MA均线</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 品种列表表格 -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <div class="panel-icon">📋</div>
+                        <h3>品种列表</h3>
+                    </div>
+                    <span class="panel-tag">实时更新</span>
+                </div>
+                <table class="price-table">
+                    <thead>
+                        <tr>
+                            <th>品种</th>
+                            <th>当前价</th>
+                            <th>日涨跌</th>
+                            <th>周涨跌</th>
+                            <th>月涨跌</th>
+                            <th>成交量</th>
+                            <th>AI趋势</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="priceTableBody"></tbody>
+                </table>
+            </div>
+
+            <!-- 热力图 -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <div class="panel-icon">🔥</div>
+                        <h3>家电品种涨跌热力图</h3>
+                    </div>
+                    <span class="panel-tag">实时</span>
+                </div>
+                <div class="heatmap-large" id="heatmap"></div>
+            </div>
+
+            <!-- 异动排行榜 -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <div class="panel-icon">⚡</div>
+                        <h3>异动排行榜</h3>
+                    </div>
+                    <span class="panel-tag">实时监测</span>
+                </div>
+                <div class="alert-grid" id="alertGrid"></div>
+            </div>
+
+            <!-- 页脚 -->
+            <footer class="footer">
+                <p>© 2024 钧衍智研 OPC · 家电制造业大宗商品AI预测平台 · 数据仅供参考，不构成投资建议</p>
+            </footer>
+        </main>
+    </div>
+
+    <script>
+        // ============================================
+        // 数据
+        // ============================================
+        const COMMODITIES = [
+            { name: '铜', code: 'SHFE', fullName: '沪铜', price: 72300, change: 1.8, weekChange: 3.2, monthChange: 5.8, vol: '12.8万手', volChange: 15.2, trend: 'bull', trendText: '看涨', icon: '🥇', filter: 'metal', page: 'copper.html' },
+            { name: '铝', code: 'SHFE', fullName: '沪铝', price: 18920, change: 0.6, weekChange: 1.1, monthChange: 2.3, vol: '8.5万手', volChange: 8.3, trend: 'bull', trendText: '偏强', icon: '🔩', filter: 'metal', page: 'aluminum.html' },
+            { name: '钢材', code: 'SHFE', fullName: '螺纹钢', price: 4180, change: -0.4, weekChange: -0.9, monthChange: -1.5, vol: '18.2万手', volChange: -5.1, trend: 'neutral', trendText: '震荡', icon: '⚙️', filter: 'steel', page: 'steel.html' },
+            { name: '塑料', code: 'DCE', fullName: '塑料', price: 8650, change: 0, weekChange: 0.2, monthChange: 0.8, vol: '6.3万手', volChange: 1.2, trend: 'neutral', trendText: '平稳', icon: '💎', filter: 'plastic', page: 'plastic.html' },
+            { name: '不锈钢', code: 'SHFE', fullName: '不锈钢', price: 15800, change: 0.3, weekChange: 0.8, monthChange: 1.2, vol: '4.1万手', volChange: 3.7, trend: 'bull', trendText: '看涨', icon: '🏭', filter: 'metal', page: 'stainless.html' }
+        ];
+
+        const HEATMAP = [
+            { n: '沪铜', c: 1.8, p: 72300 }, { n: '沪铝', c: 0.6, p: 18920 }, { n: '螺纹', c: -0.4, p: 4180 }, { n: '热卷', c: -0.2, p: 4250 },
+            { n: '塑料', c: 0, p: 8650 }, { n: 'PVC', c: 0.3, p: 5920 }, { n: '铝材', c: 0.8, p: 19200 }, { n: '铜管', c: 1.5, p: 68500 },
+            { n: '冷轧', c: -0.3, p: 4680 }, { n: '镀锌', c: -0.1, p: 4820 }, { n: '不锈钢', c: 0.3, p: 15800 }, { n: 'PP', c: 0.1, p: 7650 },
+            { n: 'PE', c: -0.2, p: 8120 }, { n: 'ABS', c: 0.4, p: 11200 }, { n: 'PS', c: 0.2, p: 9650 }, { n: '铜杆', c: 1.6, p: 67800 }
+        ];
+
+        const ALERTS = [
+            { name: '沪铜', time: '10:32', desc: '价格突破7.2万，创年内新高', imp: '压缩机成本+3.2%', level: 'high', levelText: '高影响', color: 'red' },
+            { name: 'LME铝', time: '09:45', desc: '库存降至52万吨，刷新历史低值', imp: '供应偏紧信号', level: 'medium', levelText: '中影响', color: 'orange' },
+            { name: '沪铜', time: '09:20', desc: '现货升水扩大至200元/吨', imp: '短期看涨情绪', level: 'low', levelText: '提示', color: 'yellow' },
+            { name: '螺纹钢', time: '14:15', desc: '钢厂开工率回升至78%', imp: '供应压力增加', level: 'medium', levelText: '中影响', color: 'orange' },
+            { name: '塑料', time: '11:30', desc: '石化负荷稳定在85%', imp: '供需平衡', level: 'low', levelText: '提示', color: 'green' },
+            { name: '不锈钢', time: '13:20', desc: '镍价上涨带动成本上升', imp: '成本支撑增强', level: 'low', levelText: '提示', color: 'yellow' }
+        ];
+
+        // ============================================
+        // 工具
+        // ============================================
+        const fmt = n => n.toLocaleString('zh-CN');
+        const fmtPrice = p => p >= 10000 ? (p/10000).toFixed(2)+'万' : p.toLocaleString('zh-CN');
+        const heatColor = c => c > 0 ? `rgba(34,197,94,${0.15 + Math.min(Math.abs(c)/3,1)*0.4})` : c < 0 ? `rgba(239,68,68,${0.15 + Math.min(Math.abs(c)/3,1)*0.4})` : 'rgba(136,136,136,0.15)';
+
+        let currentFilter = 'all';
+        let currentSearch = '';
+        let selectedCommodity = COMMODITIES[0];
+
+        // ============================================
+        // 渲染
+        // ============================================
+        function renderTable() {
+            const filtered = COMMODITIES.filter(c => {
+                const matchFilter = currentFilter === 'all' || c.filter === currentFilter;
+                const matchSearch = currentSearch === '' || c.name.includes(currentSearch) || c.fullName.includes(currentSearch);
+                return matchFilter && matchSearch;
+            });
+
+            const tbody = document.getElementById('priceTableBody');
+            tbody.innerHTML = filtered.map(c => `
+                <tr onclick="selectCommodity('${c.name}')" style="cursor:pointer;">
+                    <td>
+                        <div class="commodity-cell">
+                            <div class="commodity-icon">${c.icon}</div>
+                            <div class="commodity-info">
+                                <span class="commodity-name">${c.name}</span>
+                                <span class="commodity-code">${c.fullName}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="price-value">${fmt(c.price)}</span>
+                        <span class="price-unit">元/吨</span>
+                    </td>
+                    <td>
+                        <div class="change-cell">
+                            <span class="change-main ${c.change > 0 ? 'up' : c.change < 0 ? 'down' : 'neutral'}">${c.change > 0 ? '↑' : c.change < 0 ? '↓' : '→'} ${c.change > 0 ? '+' : ''}${c.change}%</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="change-cell">
+                            <span class="change-main ${c.weekChange > 0 ? 'up' : c.weekChange < 0 ? 'down' : 'neutral'}">${c.weekChange > 0 ? '+' : ''}${c.weekChange}%</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="change-cell">
+                            <span class="change-main ${c.monthChange > 0 ? 'up' : c.monthChange < 0 ? 'down' : 'neutral'}">${c.monthChange > 0 ? '+' : ''}${c.monthChange}%</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="volume-cell">
+                            <span class="volume-value">${c.vol}</span>
+                            <span class="volume-change ${c.volChange > 0 ? 'up' : 'down'}">${c.volChange > 0 ? '+' : ''}${c.volChange}%</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="ai-badge ${c.trend}">${c.trendText}</span>
+                    </td>
+                    <td>
+                        <button class="action-btn" onclick="event.stopPropagation(); location.href='${c.page}'">详情</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderHeatmap() {
+            const g = document.getElementById('heatmap');
+            g.innerHTML = HEATMAP.map(h => `
+                <div class="heat-cell" style="background:${heatColor(h.c)};">
+                    <span class="heat-name">${h.n}</span>
+                    <span class="heat-val" style="color:${h.c > 0 ? 'var(--up)' : h.c < 0 ? 'var(--down)' : 'var(--text-sec)'}">${h.c > 0 ? '+' : ''}${h.c}%</span>
+                    <span class="heat-price">${fmtPrice(h.p)}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderAlerts() {
+            const g = document.getElementById('alertGrid');
+            g.innerHTML = ALERTS.map(a => `
+                <div class="alert-card ${a.color}">
+                    <div class="alert-header">
+                        <span class="alert-title">${a.name}</span>
+                        <span class="alert-time">${a.time}</span>
+                    </div>
+                    <div class="alert-body">${a.desc}</div>
+                    <div class="alert-tags">
+                        <span class="alert-tag">${a.imp}</span>
+                        <span class="alert-level-tag ${a.level}">${a.levelText}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderKlineTabs() {
+            const tabs = document.getElementById('klineTabs');
+            tabs.innerHTML = COMMODITIES.map(c => `
+                <div class="kline-tab ${c.name === selectedCommodity.name ? 'active' : ''}" onclick="selectCommodity('${c.name}')">
+                    <span class="kline-tab-icon">${c.icon}</span>
+                    <div class="kline-tab-info">
+                        <div class="kline-tab-name">${c.name}</div>
+                        <div class="kline-tab-price">${fmtPrice(c.price)}</div>
+                    </div>
+                    <span class="kline-tab-change ${c.change > 0 ? 'up' : 'down'}">${c.change > 0 ? '+' : ''}${c.change}%</span>
+                </div>
+            `).join('');
+        }
+
+        function selectCommodity(name) {
+            selectedCommodity = COMMODITIES.find(c => c.name === name);
+            document.getElementById('klineSymbol').textContent = selectedCommodity.fullName;
+            document.getElementById('klinePrice').textContent = fmt(selectedCommodity.price);
+            renderKlineTabs();
+            renderChart();
+            renderTable();
+        }
+
+        function renderChart() {
+            const c = document.getElementById('klineChart');
+            const ctx = c.getContext('2d');
+            const rect = c.parentElement.getBoundingClientRect();
+            c.width = rect.width;
+            c.height = rect.height;
+            const W = c.width, H = c.height;
+            const pad = { t: 20, r: 50, b: 40, l: 60 };
+            const cw = W - pad.l - pad.r, ch = H - pad.t - pad.b;
+
+            ctx.clearRect(0, 0, W, H);
+
+            // 生成K线数据
+            const candles = [];
+            const basePrice = selectedCommodity.price;
+            for (let i = 0; i < 60; i++) {
+                const open = basePrice * (0.98 + Math.random() * 0.04);
+                const close = basePrice * (0.98 + Math.random() * 0.04);
+                const high = Math.max(open, close) * (1 + Math.random() * 0.01);
+                const low = Math.min(open, close) * (1 - Math.random() * 0.01);
+                candles.push({ open, close, high, low });
+            }
+
+            const allPrices = candles.flatMap(c => [c.high, c.low]);
+            const mn = Math.min(...allPrices) * 0.998;
+            const mx = Math.max(...allPrices) * 1.002;
+            const sY = v => pad.t + ch - ((v-mn)/(mx-mn))*ch;
+            const candleW = cw / candles.length * 0.7;
+
+            // 网格
+            ctx.strokeStyle = 'rgba(200,150,62,0.06)';
+            for (let i = 0; i <= 5; i++) {
+                const y = pad.t + (ch/5)*i;
+                ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W-pad.r, y); ctx.stroke();
+            }
+
+            // K线
+            candles.forEach((cd, i) => {
+                const x = pad.l + (i + 0.5) * (cw / candles.length);
+                const isUp = cd.close >= cd.open;
+                ctx.strokeStyle = isUp ? '#22C55E' : '#EF4444';
+                ctx.fillStyle = isUp ? '#22C55E' : '#EF4444';
+                
+                // 影线
+                ctx.beginPath();
+                ctx.moveTo(x, sY(cd.high));
+                ctx.lineTo(x, sY(cd.low));
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                
+                // 实体
+                const bodyTop = sY(Math.max(cd.open, cd.close));
+                const bodyBottom = sY(Math.min(cd.open, cd.close));
+                ctx.fillRect(x - candleW/2, bodyTop, candleW, Math.max(bodyBottom - bodyTop, 1));
+            });
+
+            // MA线
+            ctx.beginPath();
+            ctx.strokeStyle = '#3A8BC7';
+            ctx.lineWidth = 2;
+            const ma = [];
+            for (let i = 0; i < candles.length; i++) {
+                const slice = candles.slice(Math.max(0, i-4), i+1);
+                const avg = slice.reduce((s, c) => s + c.close, 0) / slice.length;
+                ma.push(avg);
+            }
+            ma.forEach((v, i) => {
+                const x = pad.l + (i + 0.5) * (cw / candles.length);
+                if (i === 0) ctx.moveTo(x, sY(v));
+                else ctx.lineTo(x, sY(v));
+            });
+            ctx.stroke();
+
+            // Y轴
+            ctx.fillStyle = '#556677';
+            ctx.font = '10px -apple-system';
+            ctx.textAlign = 'right';
+            for (let i = 0; i <= 5; i++) {
+                const p = mn + ((mx-mn)/5)*(5-i);
+                ctx.fillText(fmtPrice(p), pad.l - 8, pad.t + (ch/5)*i + 4);
+            }
+        }
+
+        // ============================================
+        // 时间
+        // ============================================
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('curTime').textContent = now.toLocaleString('zh-CN', {
+                year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'
+            });
+        }
+
+        // ============================================
+        // 事件绑定
+        // ============================================
+        function initEvents() {
+            // 筛选器
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentFilter = btn.dataset.filter;
+                    renderTable();
+                });
+            });
+
+            // 搜索
+            document.getElementById('searchInput').addEventListener('input', e => {
+                currentSearch = e.target.value;
+                renderTable();
+            });
+
+            // 时间切换
+            document.querySelectorAll('.time-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    renderChart();
+                });
+            });
+        }
+
+        // ============================================
+        // 初始化
+        // ============================================
+        function init() {
+            updateTime();
+            setInterval(updateTime, 1000);
+
+            renderTable();
+            renderHeatmap();
+            renderAlerts();
+            renderKlineTabs();
+            renderChart();
+
+            initEvents();
+
+            window.addEventListener('resize', renderChart);
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

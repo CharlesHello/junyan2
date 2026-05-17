@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>风险预警 - 铜价异动预警 - 钧衍智研OPC</title>
+    <style>
+        :root {
+            --gold: #C8963E;
+            --gold-light: #E8C56A;
+            --gold-dim: #6B5A30;
+            --blue: #1B4D7A;
+            --blue-light: #3A8BC7;
+            --orange: #E8712B;
+            --bg-deep: #060D18;
+            --bg-base: #0A1424;
+            --bg-card: #0F1D32;
+            --bg-hover: #152640;
+            --bg-raised: #1A3050;
+            --text-max: #FFFFFF;
+            --text-pri: #E0E6EC;
+            --text-sec: #8899AA;
+            --text-dim: #556677;
+            --text-hint: #334455;
+            --up: #22C55E;
+            --up-bg: rgba(34, 197, 94, 0.12);
+            --down: #EF4444;
+            --down-bg: rgba(239, 68, 68, 0.12);
+            --warn: #F59E0B;
+            --warn-bg: rgba(245, 158, 11, 0.12);
+            --line: rgba(200, 150, 62, 0.1);
+            --line-strong: rgba(200, 150, 62, 0.2);
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            --glow: 0 0 25px rgba(200, 150, 62, 0.15);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        a { text-decoration: none; color: inherit; }
+        a:hover { text-decoration: none; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-base);
+            color: var(--text-pri);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        .app { display: flex; min-height: 100vh; }
+
+        .sidebar {
+            width: 72px;
+            background: var(--bg-deep);
+            border-right: 1px solid var(--line);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+            position: fixed;
+            top: 0; left: 0; bottom: 0;
+            z-index: 100;
+        }
+
+        .sidebar-logo {
+            width: 44px; height: 44px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; font-weight: 700; color: var(--bg-deep);
+            margin-bottom: 32px;
+            box-shadow: var(--glow);
+        }
+
+        .sidebar-nav { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+
+        .nav-btn {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            text-decoration: none;
+        }
+
+        .nav-btn:hover { background: rgba(200, 150, 62, 0.1); }
+        .nav-btn.active { background: rgba(200, 150, 62, 0.15); }
+
+        .nav-btn.active::before {
+            content: '';
+            position: absolute;
+            left: -12px; top: 50%;
+            transform: translateY(-50%);
+            width: 3px; height: 24px;
+            background: var(--gold);
+            border-radius: 0 3px 3px 0;
+        }
+
+        .nav-icon { font-size: 20px; margin-bottom: 2px; }
+        .nav-label { font-size: 9px; color: var(--text-dim); }
+        .nav-btn.active .nav-label { color: var(--gold); }
+
+        .sidebar-user {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, var(--blue), var(--blue-light));
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 600;
+            cursor: pointer;
+        }
+
+        .main { flex: 1; margin-left: 72px; padding: 24px 32px; }
+
+        .header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 28px;
+        }
+
+        .header-left h1 { font-size: 22px; font-weight: 600; color: var(--text-max); margin-bottom: 4px; }
+        .header-left p { font-size: 12px; color: var(--text-dim); }
+
+        .breadcrumb {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 12px; color: var(--text-dim);
+            margin-bottom: 20px;
+        }
+
+        .breadcrumb a { color: var(--text-dim); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--gold); }
+        .breadcrumb span { color: var(--text-hint); }
+        .breadcrumb .current { color: var(--gold); }
+
+        .grid-row { display: grid; gap: 24px; margin-bottom: 24px; }
+        .grid-2 { grid-template-columns: 1fr 1fr; }
+        .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+        .panel {
+            background: var(--bg-card);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 22px;
+            margin-bottom: 24px;
+        }
+
+        .panel-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .panel-title { display: flex; align-items: center; gap: 10px; }
+
+        .panel-icon {
+            width: 32px; height: 32px;
+            background: rgba(200, 150, 62, 0.1);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+        }
+
+        .panel-title h3 { font-size: 15px; font-weight: 600; color: var(--text-pri); }
+
+        /* 预警头部 */
+        .alert-hero {
+            background: linear-gradient(135deg, rgba(232, 113, 43, 0.08), rgba(232, 113, 43, 0.02));
+            border: 1px solid rgba(232, 113, 43, 0.25);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .alert-hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--orange), var(--gold), var(--orange));
+        }
+
+        .alert-header {
+            display: flex; align-items: flex-start; gap: 16px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(232, 113, 43, 0.15);
+            margin-bottom: 20px;
+        }
+
+        .alert-level-badge {
+            width: 56px; height: 56px;
+            background: linear-gradient(135deg, var(--orange), #F59E0B);
+            border-radius: 14px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .alert-level-icon { font-size: 24px; }
+        .alert-level-text { font-size: 10px; font-weight: 700; color: var(--bg-deep); }
+
+        .alert-info { flex: 1; }
+
+        .alert-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+
+        .alert-meta {
+            display: flex; align-items: center; gap: 16px;
+            font-size: 12px; color: var(--text-sec);
+        }
+
+        .alert-status {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 4px 10px;
+            background: var(--down-bg);
+            color: var(--down);
+            border-radius: 12px;
+            font-size: 11px; font-weight: 600;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .alert-time { display: flex; align-items: center; gap: 4px; }
+
+        /* 影响范围 */
+        .impact-section {}
+
+        .impact-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .impact-card {
+            padding: 18px;
+            background: var(--bg-hover);
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .impact-icon { font-size: 28px; margin-bottom: 10px; }
+
+        .impact-value {
+            font-size: 28px; font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .impact-card:nth-child(1) .impact-value { color: var(--gold); }
+        .impact-card:nth-child(2) .impact-value { color: var(--orange); }
+        .impact-card:nth-child(3) .impact-value { color: var(--down); }
+
+        .impact-label { font-size: 11px; color: var(--text-dim); }
+
+        .impact-affected {
+            text-align: left;
+        }
+
+        .affected-list {
+            display: flex; flex-wrap: wrap; gap: 8px;
+            margin-top: 8px;
+        }
+
+        .affected-tag {
+            font-size: 11px;
+            padding: 6px 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+        }
+
+        /* 原因分析 */
+        .cause-section {}
+
+        .cause-card {
+            background: var(--bg-hover);
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 14px;
+        }
+
+        .cause-card:last-child { margin-bottom: 0; }
+
+        .cause-header {
+            display: flex; align-items: center; gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .cause-icon {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+        }
+
+        .cause-icon.direct { background: var(--down-bg); }
+        .cause-icon.indirect { background: var(--warn-bg); }
+        .cause-icon.chain { background: rgba(27, 77, 122, 0.2); }
+
+        .cause-title { font-size: 14px; font-weight: 600; }
+
+        .cause-content {
+            font-size: 13px; color: var(--text-sec);
+            line-height: 1.6;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        .cause-highlight {
+            color: var(--text-pri);
+            font-weight: 500;
+        }
+
+        /* 传导路径 */
+        .transmission-section {
+            background: linear-gradient(135deg, rgba(27, 77, 122, 0.1), rgba(27, 77, 122, 0.03));
+            border: 1px solid var(--blue);
+        }
+
+        .transmission-flow {
+            display: flex; align-items: center; gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        .trans-node {
+            padding: 10px 14px;
+            background: var(--bg-hover);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            text-align: center;
+            min-width: 70px;
+        }
+
+        .trans-node.highlight {
+            border-color: var(--gold);
+            background: rgba(200, 150, 62, 0.1);
+        }
+
+        .trans-node-icon { font-size: 18px; margin-bottom: 4px; }
+        .trans-node-name { font-size: 11px; font-weight: 500; }
+
+        .trans-arrow { color: var(--text-dim); font-size: 18px; }
+
+        /* 历史类似事件 */
+        .history-section {}
+
+        .history-timeline { position: relative; padding-left: 24px; }
+
+        .history-timeline::before {
+            content: '';
+            position: absolute;
+            left: 7px; top: 0; bottom: 0;
+            width: 2px;
+            background: var(--line);
+        }
+
+        .history-item {
+            position: relative;
+            padding: 16px;
+            background: var(--bg-hover);
+            border-radius: 10px;
+            margin-bottom: 14px;
+        }
+
+        .history-item::before {
+            content: '';
+            position: absolute;
+            left: -21px; top: 20px;
+            width: 12px; height: 12px;
+            background: var(--bg-card);
+            border: 2px solid var(--gold);
+            border-radius: 50%;
+        }
+
+        .history-date { font-size: 11px; color: var(--gold); margin-bottom: 6px; }
+
+        .history-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+
+        .history-desc { font-size: 12px; color: var(--text-sec); line-height: 1.5; }
+
+        .history-stats {
+            display: flex; gap: 16px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--line);
+        }
+
+        .history-stat {
+            font-size: 11px; color: var(--text-dim);
+        }
+
+        .history-stat span { color: var(--text-pri); font-weight: 600; }
+
+        /* 建议措施 */
+        .suggestions-section {}
+
+        .suggestion-list { display: flex; flex-direction: column; gap: 12px; }
+
+        .suggestion-item {
+            display: flex; align-items: flex-start; gap: 14px;
+            padding: 16px;
+            background: var(--bg-hover);
+            border-radius: 10px;
+            border-left: 3px solid;
+            transition: all 0.2s;
+        }
+
+        .suggestion-item:hover { transform: translateX(4px); }
+
+        .suggestion-item.high { border-left-color: var(--down); }
+        .suggestion-item.medium { border-left-color: var(--warn); }
+        .suggestion-item.low { border-left-color: var(--up); }
+
+        .suggestion-priority {
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 10px; font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .suggestion-priority.high { background: var(--down-bg); color: var(--down); }
+        .suggestion-priority.medium { background: var(--warn-bg); color: var(--warn); }
+        .suggestion-priority.low { background: var(--up-bg); color: var(--up); }
+
+        .suggestion-content { flex: 1; }
+
+        .suggestion-title { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+
+        .suggestion-desc { font-size: 12px; color: var(--text-sec); line-height: 1.5; }
+
+        /* 后续跟踪 */
+        .followup-section {
+            background: linear-gradient(135deg, rgba(200, 150, 62, 0.05), rgba(200, 150, 62, 0.01));
+            border: 1px solid var(--line-strong);
+        }
+
+        .followup-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .followup-card {
+            padding: 16px;
+            background: var(--bg-hover);
+            border-radius: 10px;
+        }
+
+        .followup-label {
+            font-size: 11px; color: var(--text-dim);
+            margin-bottom: 8px;
+            display: flex; align-items: center; gap: 6px;
+        }
+
+        .followup-value {
+            font-size: 18px; font-weight: 700;
+        }
+
+        .followup-detail { font-size: 12px; color: var(--text-sec); margin-top: 4px; }
+
+        /* 页脚 */
+        .footer {
+            padding: 20px 0;
+            text-align: center;
+            border-top: 1px solid var(--line);
+            margin-top: 24px;
+        }
+
+        .footer p { font-size: 10px; color: var(--text-hint); }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="sidebar-logo">衍</div>
+                        <nav class="sidebar-nav">
+                <a href="index.html" class="nav-btn">
+                    <span class="nav-icon">🏠</span>
+                    <span class="nav-label">首页</span>
+                </a>
+                <a href="market.html" class="nav-btn">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-label">行情</span>
+                </a>
+                <a href="supply-chain.html" class="nav-btn">
+                    <span class="nav-icon">🔗</span>
+                    <span class="nav-label">产业链</span>
+                </a>
+                <a href="prediction.html" class="nav-btn">
+                    <span class="nav-icon">🧠</span>
+                    <span class="nav-label">AI预测</span>
+                </a>
+                <a href="alert.html" class="nav-btn active">
+                    <span class="nav-icon">🔔</span>
+                    <span class="nav-label">预警</span>
+                </a>
+                <a href="briefing.html" class="nav-btn">
+                    <span class="nav-icon">📰</span>
+                    <span class="nav-label">简报</span>
+                </a>
+            </nav>
+            <div class="sidebar-user">采</div>
+        </aside>
+
+        <main class="main">
+            <header class="header">
+                <div class="header-left">
+                    <h1>风险预警</h1>
+                    <p>实时监控 · 智能预警 · 决策支持</p>
+                </div>
+            </header>
+
+            <div class="breadcrumb">
+                <a href="index.html">首页</a>
+                <span>/</span>
+                <a href="alert.html">风险预警</a>
+                <span>/</span>
+                <span class="current">铜价异动预警</span>
+            </div>
+
+            <!-- 预警头部 -->
+            <div class="panel alert-hero">
+                <div class="alert-header">
+                    <div class="alert-level-badge">
+                        <span class="alert-level-icon">🟠</span>
+                        <span class="alert-level-text">高风险</span>
+                    </div>
+                    <div class="alert-info">
+                        <div class="alert-title">铜价日波动超3σ</div>
+                        <div class="alert-meta">
+                            <span class="alert-status">● 活跃</span>
+                            <span class="alert-time">📅 2026年5月17日 10:32 触发</span>
+                            <span>⏱️ 持续时间：4小时32分</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 影响范围 -->
+                <div class="impact-section">
+                    <div class="panel-title" style="margin-bottom: 14px;">
+                        <div class="panel-icon">📊</div>
+                        <h3>影响范围评估</h3>
+                    </div>
+
+                    <div class="impact-grid">
+                        <div class="impact-card">
+                            <div class="impact-icon">🥇</div>
+                            <div class="impact-value">铜</div>
+                            <div class="impact-label">涉及品种</div>
+                        </div>
+
+                        <div class="impact-card impact-affected">
+                            <div class="impact-label" style="margin-bottom: 4px;">影响企业类型</div>
+                            <div class="affected-list">
+                                <span class="affected-tag">空调制造商</span>
+                                <span class="affected-tag">冰箱制造商</span>
+                                <span class="affected-tag">压缩机厂商</span>
+                            </div>
+                        </div>
+
+                        <div class="impact-card">
+                            <div class="impact-icon">💰</div>
+                            <div class="impact-value">+¥230万</div>
+                            <div class="impact-label">月度成本增量</div>
+                        </div>
+
+                        <div class="impact-card">
+                            <div class="impact-icon">📈</div>
+                            <div class="impact-value">+2.3%</div>
+                            <div class="impact-label">压缩机成本增幅</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 原因分析 -->
+            <div class="grid-row grid-2">
+                <div class="panel cause-section">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <div class="panel-icon">🔍</div>
+                            <h3>原因分析（AI生成）</h3>
+                        </div>
+                    </div>
+
+                    <div class="cause-card">
+                        <div class="cause-header">
+                            <div class="cause-icon direct">🔴</div>
+                            <div class="cause-title">直接原因</div>
+                        </div>
+                        <div class="cause-content">
+                            <span class="cause-highlight">秘鲁铜矿供应扰动</span>是本次铜价异动的直接触发因素。受当地运输罢工影响，Antamina、Cerro Verde等大型铜矿出货受阻，预计影响全球铜供应约3%。LME铜库存持续下降，现货升水扩大至$180/吨。
+                        </div>
+                    </div>
+
+                    <div class="cause-card">
+                        <div class="cause-header">
+                            <div class="cause-icon indirect">🟡</div>
+                            <div class="cause-title">间接原因</div>
+                        </div>
+                        <div class="cause-content">
+                            <span class="cause-highlight">美元走弱</span>和<span class="cause-highlight">LME库存下降</span>形成共振。美联储维持利率不变，美元指数回落0.8%，以美元计价的大宗商品普遍走强。同时，LME铝库存创年内新低，带动市场做多情绪。
+                        </div>
+                    </div>
+
+                    <div class="cause-card">
+                        <div class="cause-header">
+                            <div class="cause-icon chain">🔗</div>
+                            <div class="cause-title">触发条件</div>
+                        </div>
+                        <div class="cause-content">
+                            铜价单日涨幅达<span class="cause-highlight">3.2%</span>，超过3个标准差（3σ），触发系统预警机制。从历史数据看，该级别异动发生概率约0.3%，属于小概率事件。
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel transmission-section">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <div class="panel-icon">🔗</div>
+                            <h3>产业链传导路径</h3>
+                        </div>
+                    </div>
+
+                    <div class="transmission-flow">
+                        <div class="trans-node highlight">
+                            <div class="trans-node-icon">⛏️</div>
+                            <div class="trans-node-name">铜矿</div>
+                        </div>
+                        <span class="trans-arrow">→</span>
+                        <div class="trans-node">
+                            <div class="trans-node-icon">🏭</div>
+                            <div class="trans-node-name">铜冶炼</div>
+                        </div>
+                        <span class="trans-arrow">→</span>
+                        <div class="trans-node highlight">
+                            <div class="trans-node-icon">🔧</div>
+                            <div class="trans-node-name">铜管</div>
+                        </div>
+                        <span class="trans-arrow">→</span>
+                        <div class="trans-node">
+                            <div class="trans-node-icon">❄️</div>
+                            <div class="trans-node-name">压缩机</div>
+                        </div>
+                        <span class="trans-arrow">→</span>
+                        <div class="trans-node highlight">
+                            <div class="trans-node-icon">❄️</div>
+                            <div class="trans-node-name">空调</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px;">
+                        <div style="font-size: 12px; color: var(--text-dim); margin-bottom: 10px;">传导时间线</div>
+                        <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-sec);">
+                            <span>铜矿扰动</span>
+                            <span>冶炼成本↑</span>
+                            <span>铜管采购↑</span>
+                            <span>压缩机利润↓</span>
+                            <span>空调承压</span>
+                        </div>
+                        <div style="height: 4px; background: var(--bg-card); border-radius: 2px; margin-top: 6px;">
+                            <div style="height: 100%; width: 60%; background: linear-gradient(90deg, var(--down), var(--orange)); border-radius: 2px;"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--text-hint); margin-top: 4px;">
+                            <span>T+0</span>
+                            <span>T+5天</span>
+                            <span>T+10天</span>
+                            <span>T+20天</span>
+                            <span>T+30天</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 历史类似事件 -->
+            <div class="panel history-section">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <div class="panel-icon">📜</div>
+                        <h3>历史类似事件回顾</h3>
+                    </div>
+                </div>
+
+                <div class="history-timeline">
+                    <div class="history-item">
+                        <div class="history-date">2025年8月12日 - 类似事件</div>
+                        <div class="history-title">智利铜矿罢工，铜价单日涨幅2.8%</div>
+                        <div class="history-desc">
+                            受智利Codelco铜矿工人罢工影响，铜价快速上涨。事件持续约2周后随谈判进展逐步回落。
+                        </div>
+                        <div class="history-stats">
+                            <div class="history-stat">持续时长：<span>14天</span></div>
+                            <div class="history-stat">最大涨幅：<span>+5.2%</span></div>
+                            <div class="history-stat">后续走势：<span>冲高回落</span></div>
+                        </div>
+                    </div>
+
+                    <div class="history-item">
+                        <div class="history-date">2025年3月8日 - 类似事件</div>
+                        <div class="history-title">美元走弱+库存下降，铜价突破阻力位</div>
+                        <div class="history-desc">
+                            美联储降息预期升温，美元走弱叠加LME库存持续下降，铜价突破关键阻力位$9000/吨。
+                        </div>
+                        <div class="history-stats">
+                            <div class="history-stat">持续时长：<span>持续3周</span></div>
+                            <div class="history-stat">最大涨幅：<span>+8.5%</span></div>
+                            <div class="history-stat">后续走势：<span>震荡上行</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 建议措施 -->
+            <div class="panel suggestions-section">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <div class="panel-icon">💡</div>
+                        <h3>建议措施</h3>
+                    </div>
+                </div>
+
+                <div class="suggestion-list">
+                    <div class="suggestion-item high">
+                        <span class="suggestion-priority high">高优先级</span>
+                        <div class="suggestion-content">
+                            <div class="suggestion-title">立即启动铜材锁价机制</div>
+                            <div class="suggestion-desc">
+                                建议采购部门立即与铜材供应商沟通，锁定Q3采购价格。当前铜价已处于高位，但供应扰动可能持续，建议锁定80%以上的Q3用量，对冲后续涨价风险。
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="suggestion-item high">
+                        <span class="suggestion-priority high">高优先级</span>
+                        <div class="suggestion-content">
+                            <div class="suggestion-title">评估压缩机成本传导方案</div>
+                            <div class="suggestion-desc">
+                                铜价上涨2.3%导致压缩机成本增加约¥230万/月。建议尽快与下游客户沟通成本传导事宜，避免成本压力侵蚀利润。可考虑优先保证高毛利产品线供应。
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="suggestion-item medium">
+                        <span class="suggestion-priority medium">中优先级</span>
+                        <div class="suggestion-content">
+                            <div class="suggestion-title">加强铜价走势监控</div>
+                            <div class="suggestion-desc">
+                                持续关注秘鲁铜矿供应恢复情况、LME库存变化及美元指数走势。建议每日更新采购成本测算，根据价格变动动态调整锁价策略。
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="suggestion-item low">
+                        <span class="suggestion-priority low">低优先级</span>
+                        <div class="suggestion-content">
+                            <div class="suggestion-title">探索铝材替代方案</div>
+                            <div class="suggestion-desc">
+                                考虑在部分非核心部件使用铝材替代铜材，降低对铜的依赖度。铝价目前相对稳定，可作为成本优化方向之一。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 后续跟踪 -->
+            <div class="panel followup-section">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <div class="panel-icon">📡</div>
+                        <h3>后续跟踪</h3>
+                    </div>
+                </div>
+
+                <div class="followup-grid">
+                    <div class="followup-card">
+                        <div class="followup-label">
+                            <span>⏱️</span> 预计持续时长
+                        </div>
+                        <div class="followup-value" style="color: var(--orange);">7-14天</div>
+                        <div class="followup-detail">
+                            预计铜价高位震荡将持续1-2周，需持续关注秘鲁罢工进展
+                        </div>
+                    </div>
+
+                    <div class="followup-card">
+                        <div class="followup-label">
+                            <span>✅</span> 预警解除条件
+                        </div>
+                        <div class="followup-value" style="color: var(--up);">铜价日波动&lt;1σ</div>
+                        <div class="followup-detail">
+                            当铜价波动恢复到1个标准差以内，且供应扰动因素消除，预警将自动解除
+                        </div>
+                    </div>
+
+                    <div class="followup-card">
+                        <div class="followup-label">
+                            <span>📧</span> 推送通知
+                        </div>
+                        <div class="followup-value" style="color: var(--gold);">已开启</div>
+                        <div class="followup-detail">
+                            已向采购部负责人发送预警通知，后续更新将通过App推送
+                        </div>
+                    </div>
+
+                    <div class="followup-card">
+                        <div class="followup-label">
+                            <span>🤖</span> AI监控状态
+                        </div>
+                        <div class="followup-value" style="color: var(--up);">实时监控中</div>
+                        <div class="followup-detail">
+                            钧衍OPC系统持续监控铜价走势，异常波动将即时触发新预警
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="footer">
+                <p>© 2024 钧衍智研 OPC · 家电制造业大宗商品AI预测平台 · 数据仅供参考，不构成投资建议</p>
+            </footer>
+        </main>
+    </div>
+</body>
+</html>

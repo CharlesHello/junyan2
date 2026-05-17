@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>塑料详情 - 钧衍智研OPC</title>
+    <style>
+        :root { --gold: #C8963E; --gold-light: #E8C56A; --gold-dim: #6B5A30; --blue: #1B4D7A; --blue-light: #3A8BC7; --orange: #E8712B; --bg-deep: #060D18; --bg-base: #0A1424; --bg-card: #0F1D32; --bg-hover: #152640; --bg-raised: #1A3050; --text-max: #FFFFFF; --text-pri: #E0E6EC; --text-sec: #8899AA; --text-dim: #556677; --text-hint: #334455; --up: #22C55E; --up-bg: rgba(34, 197, 94, 0.12); --down: #EF4444; --down-bg: rgba(239, 68, 68, 0.12); --warn: #F59E0B; --warn-bg: rgba(245, 158, 11, 0.12); --line: rgba(200, 150, 62, 0.1); --line-strong: rgba(200, 150, 62, 0.2); --shadow: 0 4px 20px rgba(0, 0, 0, 0.4); --glow: 0 0 25px rgba(200, 150, 62, 0.15); }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        a { text-decoration: none; color: inherit; }
+        a:hover { text-decoration: none; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif; background: var(--bg-base); color: var(--text-pri); line-height: 1.5; min-height: 100vh; }
+        .app { display: flex; min-height: 100vh; }
+        .sidebar { width: 72px; background: var(--bg-deep); border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; padding: 20px 0; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; }
+        .sidebar-logo { width: 44px; height: 44px; background: linear-gradient(135deg, var(--gold), var(--gold-light)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; color: var(--bg-deep); margin-bottom: 32px; box-shadow: var(--glow); cursor: pointer; }
+        .sidebar-nav { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+        .nav-btn { width: 48px; height: 48px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; position: relative; text-decoration: none; }
+        .nav-btn:hover { background: rgba(200, 150, 62, 0.1); }
+        .nav-btn.active { background: rgba(200, 150, 62, 0.15); }
+        .nav-btn.active::before { content: ''; position: absolute; left: -12px; top: 50%; transform: translateY(-50%); width: 3px; height: 24px; background: var(--gold); border-radius: 0 3px 3px 0; }
+        .nav-icon { font-size: 20px; margin-bottom: 2px; }
+        .nav-label { font-size: 9px; color: var(--text-dim); }
+        .nav-btn.active .nav-label { color: var(--gold); }
+        .sidebar-user { width: 40px; height: 40px; background: linear-gradient(135deg, var(--blue), var(--blue-light)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; }
+        .main { flex: 1; margin-left: 72px; padding: 24px 32px; }
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+        .header-left h1 { font-size: 22px; font-weight: 600; color: var(--text-max); margin-bottom: 4px; }
+        .breadcrumb { font-size: 12px; color: var(--text-dim); display: flex; align-items: center; gap: 6px; }
+        .breadcrumb a { color: var(--text-sec); text-decoration: none; }
+        .breadcrumb a:hover { color: var(--gold); }
+        .header-right { display: flex; align-items: center; gap: 16px; }
+        .user-card { display: flex; align-items: center; gap: 10px; padding: 8px 14px; background: var(--bg-card); border: 1px solid var(--line); border-radius: 24px; }
+        .user-avatar { width: 28px; height: 28px; background: linear-gradient(135deg, var(--blue), var(--blue-light)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; }
+        .user-info { font-size: 12px; color: var(--text-sec); }
+        .user-info strong { color: var(--gold); font-weight: 500; }
+        .notif-btn { width: 40px; height: 40px; background: var(--bg-card); border: 1px solid var(--line); border-radius: 10px; display: flex; align-items: center; justify-content: center; position: relative; }
+        .notif-btn svg { width: 18px; height: 18px; fill: var(--text-sec); }
+        .notif-badge { position: absolute; top: 8px; right: 8px; width: 8px; height: 8px; background: var(--down); border-radius: 50%; }
+        .breed-hero { display: grid; grid-template-columns: 1fr 1.2fr; gap: 24px; margin-bottom: 24px; }
+        .price-hero { background: var(--bg-card); border: 1px solid var(--line); border-radius: 16px; padding: 32px; position: relative; overflow: hidden; }
+        .price-hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--gold), var(--gold-light), var(--gold)); }
+        .breed-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(200, 150, 62, 0.1); border-radius: 20px; font-size: 12px; color: var(--gold); margin-bottom: 16px; }
+        .breed-icon { font-size: 24px; }
+        .price-big { font-size: 72px; font-weight: 700; color: var(--text-max); letter-spacing: -2px; line-height: 1; margin-bottom: 4px; }
+        .price-unit-big { font-size: 16px; color: var(--text-dim); margin-bottom: 16px; }
+        .price-change-big { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 16px; font-weight: 600; margin-bottom: 20px; }
+        .price-change-big.up { background: var(--up-bg); color: var(--up); }
+        .price-change-big.down { background: var(--down-bg); color: var(--down); }
+        .price-change-big.neutral { background: rgba(136,136,136,0.1); color: var(--text-sec); }
+        .price-meta { display: flex; gap: 24px; }
+        .meta-item { text-align: center; }
+        .meta-val { font-size: 18px; font-weight: 600; color: var(--text-pri); }
+        .meta-label { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+        .trend-panel { background: var(--bg-card); border: 1px solid var(--line); border-radius: 16px; padding: 24px; }
+        .trend-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .trend-title { display: flex; align-items: center; gap: 10px; }
+        .trend-icon { width: 32px; height: 32px; background: rgba(200, 150, 62, 0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .trend-title h3 { font-size: 15px; font-weight: 600; color: var(--text-pri); }
+        .time-tabs { display: flex; gap: 4px; }
+        .time-tab { padding: 6px 14px; background: transparent; border: 1px solid var(--line); border-radius: 6px; font-size: 11px; color: var(--text-sec); cursor: pointer; transition: all 0.2s; }
+        .time-tab:hover { border-color: var(--gold); color: var(--gold); }
+        .time-tab.active { background: rgba(200, 150, 62, 0.15); border-color: var(--gold); color: var(--gold); }
+        .trend-arrow { display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--bg-hover); border-radius: 12px; margin-bottom: 16px; }
+        .arrow-icon { font-size: 36px; }
+        .arrow-info h4 { font-size: 18px; font-weight: 600; margin-bottom: 4px; color: var(--text-pri); }
+        .arrow-info p { font-size: 12px; color: var(--text-sec); }
+        .trend-canvas { height: 140px; }
+        #trendChart { width: 100%; height: 100%; }
+        .panel { background: var(--bg-card); border: 1px solid var(--line); border-radius: 14px; padding: 22px; margin-bottom: 24px; }
+        .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .panel-title { display: flex; align-items: center; gap: 10px; }
+        .panel-icon { width: 32px; height: 32px; background: rgba(200, 150, 62, 0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .panel-title h3 { font-size: 15px; font-weight: 600; color: var(--text-pri); }
+        .panel-tag { font-size: 10px; color: var(--gold); background: rgba(200, 150, 62, 0.1); padding: 4px 10px; border-radius: 12px; }
+        .factors-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+        .factor-card { background: var(--bg-hover); border: 1px solid var(--line); border-radius: 10px; padding: 16px; text-align: center; transition: all 0.25s ease; cursor: pointer; }
+        .factor-card:hover { transform: translateY(-3px); border-color: var(--gold); box-shadow: var(--shadow); }
+        .factor-rank { width: 24px; height: 24px; background: var(--gold); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--bg-deep); margin: 0 auto 10px; }
+        .factor-icon { font-size: 24px; margin-bottom: 8px; }
+        .factor-name { font-size: 12px; font-weight: 500; margin-bottom: 6px; }
+        .factor-impact { font-size: 10px; padding: 3px 8px; border-radius: 4px; display: inline-block; }
+        .factor-impact.up { background: var(--up-bg); color: var(--up); }
+        .factor-impact.down { background: var(--down-bg); color: var(--down); }
+        .factor-impact.neutral { background: rgba(136,136,136,0.1); color: var(--text-sec); }
+        .chart-area { height: 280px; position: relative; }
+        #historyChart { width: 100%; height: 100%; }
+        .chart-tabs { display: flex; gap: 4px; margin-top: 16px; justify-content: center; }
+        .chart-tab { padding: 6px 14px; background: transparent; border: 1px solid var(--line); border-radius: 6px; font-size: 11px; color: var(--text-sec); cursor: pointer; transition: all 0.2s; }
+        .chart-tab:hover { border-color: var(--gold); color: var(--gold); }
+        .chart-tab.active { background: rgba(200, 150, 62, 0.15); border-color: var(--gold); color: var(--gold); }
+        .chart-legend { display: flex; justify-content: center; gap: 28px; margin-top: 16px; }
+        .legend-pill { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--text-dim); }
+        .legend-line { width: 18px; height: 2px; border-radius: 1px; }
+        .legend-line.gold { background: var(--gold); }
+        .legend-line.blue { background: var(--blue-light); }
+        .legend-box { width: 18px; height: 10px; background: rgba(27, 77, 122, 0.2); border-radius: 2px; }
+        .predict-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+        .predict-canvas { height: 260px; }
+        #predictChart { width: 100%; height: 100%; }
+        .predict-sidebar { display: flex; flex-direction: column; gap: 16px; }
+        .predict-card { background: var(--bg-hover); border-radius: 10px; padding: 16px; }
+        .predict-card-title { font-size: 11px; color: var(--text-dim); margin-bottom: 8px; }
+        .predict-card-val { font-size: 28px; font-weight: 700; color: var(--text-pri); }
+        .predict-card-change { font-size: 11px; margin-top: 4px; }
+        .engine-box { background: var(--bg-hover); border-radius: 10px; padding: 14px; }
+        .engine-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .engine-item:last-child { margin-bottom: 0; }
+        .engine-badge { width: 22px; height: 22px; background: var(--gold); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: var(--bg-deep); }
+        .engine-name { font-size: 11px; flex: 1; }
+        .engine-wt { font-size: 11px; font-weight: 600; color: var(--gold); }
+        .chain-flow { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+        .chain-node { padding: 12px 16px; background: var(--bg-hover); border: 1px solid var(--line); border-radius: 10px; text-align: center; min-width: 90px; transition: all 0.2s; }
+        .chain-node:hover { border-color: var(--gold); transform: translateY(-2px); }
+        .chain-node.bottle { border-color: var(--orange); background: rgba(232, 113, 43, 0.08); }
+        .chain-node-icon { font-size: 20px; margin-bottom: 6px; }
+        .chain-node-name { font-size: 11px; font-weight: 500; }
+        .chain-node-sub { font-size: 9px; color: var(--text-dim); margin-top: 2px; }
+        .chain-arrow { font-size: 18px; color: var(--text-dim); }
+        .alerts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+        .alert-card { padding: 16px; background: var(--bg-hover); border: 1px solid var(--line); border-radius: 10px; border-left: 3px solid; }
+        .alert-card.red { border-left-color: var(--down); }
+        .alert-card.orange { border-left-color: var(--orange); }
+        .alert-card.yellow { border-left-color: var(--warn); }
+        .alert-card.green { border-left-color: var(--up); }
+        .alert-card-title { font-size: 13px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .alert-card-desc { font-size: 11px; color: var(--text-sec); line-height: 1.5; margin-bottom: 10px; }
+        .alert-card-tags { display: flex; gap: 6px; margin-bottom: 10px; }
+        .alert-tag { font-size: 9px; color: var(--blue-light); background: rgba(27, 77, 122, 0.15); padding: 3px 6px; border-radius: 3px; }
+        .alert-action { font-size: 10px; color: var(--gold); padding: 6px 10px; background: rgba(200, 150, 62, 0.08); border-radius: 5px; display: inline-block; }
+        .impact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .impact-card { background: linear-gradient(135deg, rgba(200, 150, 62, 0.06), rgba(27, 77, 122, 0.06)); border: 1px solid var(--line-strong); border-radius: 12px; padding: 20px; text-align: center; }
+        .impact-icon { font-size: 32px; margin-bottom: 12px; }
+        .impact-product { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+        .impact-range { font-size: 12px; color: var(--text-sec); margin-bottom: 8px; }
+        .impact-cost { font-size: 24px; font-weight: 700; color: var(--gold); }
+        .footer { padding: 20px 0; text-align: center; border-top: 1px solid var(--line); margin-top: 24px; }
+        .footer p { font-size: 10px; color: var(--text-hint); }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <svg style="position:absolute;width:0;height:0;"><defs><linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#C8963E"/><stop offset="50%" stop-color="#E8C56A"/><stop offset="100%" stop-color="#C8963E"/></linearGradient></defs></svg>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="sidebar-logo" onclick="location.href='index.html'">衍</div>
+                        <nav class="sidebar-nav">
+                <a href="index.html" class="nav-btn">
+                    <span class="nav-icon">🏠</span>
+                    <span class="nav-label">首页</span>
+                </a>
+                <a href="market.html" class="nav-btn active">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-label">行情</span>
+                </a>
+                <a href="supply-chain.html" class="nav-btn">
+                    <span class="nav-icon">🔗</span>
+                    <span class="nav-label">产业链</span>
+                </a>
+                <a href="prediction.html" class="nav-btn">
+                    <span class="nav-icon">🧠</span>
+                    <span class="nav-label">AI预测</span>
+                </a>
+                <a href="alert.html" class="nav-btn">
+                    <span class="nav-icon">🔔</span>
+                    <span class="nav-label">预警</span>
+                </a>
+                <a href="briefing.html" class="nav-btn">
+                    <span class="nav-icon">📰</span>
+                    <span class="nav-label">简报</span>
+                </a>
+            </nav>
+            <div class="sidebar-user">采</div>
+        </aside>
+        <main class="main">
+            <header class="header">
+                <div class="header-left">
+                    <h1>塑料(PP)详情</h1>
+                    <div class="breadcrumb"><a href="index.html">首页</a> &gt; 品种详情 &gt; 塑料</div>
+                </div>
+                <div class="header-right">
+                    <div class="user-card"><div class="user-avatar">格</div><div class="user-info"><strong>家电企业</strong> · 采购部</div></div>
+                    <div class="notif-btn"><svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg><div class="notif-badge"></div></div>
+                </div>
+            </header>
+            <div class="breed-hero">
+                <div class="price-hero">
+                    <div class="breed-badge"><span class="breed-icon">💎</span> PP拉丝料主力</div>
+                    <div class="price-big">8,150</div>
+                    <div class="price-unit-big">元/吨</div>
+                    <div class="price-change-big neutral">→ 0% 较昨日</div>
+                    <div class="price-meta">
+                        <div class="meta-item"><div class="meta-val">8,280</div><div class="meta-label">最高价</div></div>
+                        <div class="meta-item"><div class="meta-val">8,050</div><div class="meta-label">最低价</div></div>
+                        <div class="meta-item"><div class="meta-val">+150</div><div class="meta-label">年初至今</div></div>
+                    </div>
+                </div>
+                <div class="trend-panel">
+                    <div class="trend-header">
+                        <div class="trend-title"><div class="trend-icon">🧠</div><h3>AI价格趋势</h3></div>
+                        <div class="time-tabs">
+                            <button class="time-tab" data-t="1W">1周</button>
+                            <button class="time-tab active" data-t="1M">1月</button>
+                            <button class="time-tab" data-t="3M">3月</button>
+                        </div>
+                    </div>
+                    <div class="trend-arrow">
+                        <span class="arrow-icon">➡️</span>
+                        <div class="arrow-info"><h4>区间震荡</h4><p>石化负荷稳定，供需基本平衡</p></div>
+                    </div>
+                    <div class="trend-canvas"><canvas id="trendChart"></canvas></div>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title"><div class="panel-icon">📈</div><h3>PP价格历史走势</h3></div>
+                    <span class="panel-tag">6个月</span>
+                </div>
+                <div class="chart-area"><canvas id="historyChart"></canvas></div>
+                <div class="chart-tabs"><button class="chart-tab">1个月</button><button class="chart-tab active">3个月</button><button class="chart-tab">6个月</button><button class="chart-tab">1年</button></div>
+                <div class="chart-legend"><div class="legend-pill"><div class="legend-line gold"></div>实际价格</div><div class="legend-pill"><div class="legend-line blue"></div>移动均线</div></div>
+            </div>
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title"><div class="panel-icon">⚡</div><h3>价格驱动因子 TOP5</h3></div>
+                    <span class="panel-tag">权重分析</span>
+                </div>
+                <div class="factors-grid">
+                    <div class="factor-card"><div class="factor-rank">1</div><div class="factor-icon">🛢️</div><div class="factor-name">原油价格</div><div class="factor-impact neutral">→ 成本支撑</div></div>
+                    <div class="factor-card"><div class="factor-rank">2</div><div class="factor-icon">🏭</div><div class="factor-name">石化开工率</div><div class="factor-impact neutral">→ 85%平稳</div></div>
+                    <div class="factor-card"><div class="factor-rank">3</div><div class="factor-icon">📱</div><div class="factor-name">家电排产</div><div class="factor-impact up">→ 稳定</div></div>
+                    <div class="factor-card"><div class="factor-rank">4</div><div class="factor-icon">📦</div><div class="factor-name">社会库存</div><div class="factor-impact neutral">→ 中等</div></div>
+                    <div class="factor-card"><div class="factor-rank">5</div><div class="factor-icon">🚢</div><div class="factor-name">进口量</div><div class="factor-impact down">→ 进口增加</div></div>
+                </div>
+            </div>
+            <div class="panel" onclick="location.href='prediction.html'" style="cursor:pointer;">
+                <div class="panel-header">
+                    <div class="panel-title"><div class="panel-icon">🤖</div><h3>PP价格AI预测</h3></div>
+                    <span class="panel-tag">三层引擎</span>
+                </div>
+                <div class="predict-grid">
+                    <div class="predict-canvas"><canvas id="predictChart"></canvas></div>
+                    <div class="predict-sidebar">
+                        <div class="predict-card"><div class="predict-card-title">1周预测</div><div class="predict-card-val">8,200</div><div class="predict-card-change">↑ +0.6%</div></div>
+                        <div class="predict-card"><div class="predict-card-title">1月预测</div><div class="predict-card-val">8,350</div><div class="predict-card-change">↑ +2.5%</div></div>
+                        <div class="predict-card"><div class="predict-card-title">3月预测</div><div class="predict-card-val">8,600</div><div class="predict-card-change">↑ +5.5%</div></div>
+                        <div class="engine-box">
+                            <div class="engine-item"><div class="engine-badge">1</div><div class="engine-name">Chronos基线</div><div class="engine-wt">40%</div></div>
+                            <div class="engine-item"><div class="engine-badge">2</div><div class="engine-name">XGBoost量化</div><div class="engine-wt">35%</div></div>
+                            <div class="engine-item"><div class="engine-badge">3</div><div class="engine-name">LLM事件修正</div><div class="engine-wt">25%</div></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-legend" style="margin-top:16px;"><div class="legend-pill"><div class="legend-line gold"></div>实际价格</div><div class="legend-pill"><div class="legend-line" style="background:repeating-linear-gradient(90deg,var(--blue-light) 0,var(--blue-light) 4px,transparent 4px,transparent 8px);"></div>AI预测</div><div class="legend-pill"><div class="legend-box"></div>置信区间</div></div>
+            </div>
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title"><div class="panel-icon">🔗</div><h3>塑料在家电中的应用链</h3></div>
+                    <span class="panel-tag">家电产业链</span>
+                </div>
+                <div class="chain-flow">
+                    <div class="chain-node"><div class="chain-node-icon">🛢️</div><div class="chain-node-name">原油</div><div class="chain-node-sub">布伦特</div></div>
+                    <span class="chain-arrow">→</span>
+                    <div class="chain-node"><div class="chain-node-icon">💧</div><div class="chain-node-name">石脑油</div><div class="chain-node-sub">化工原料</div></div>
+                    <span class="chain-arrow">→</span>
+                    <div class="chain-node"><div class="chain-node-icon">⚗️</div><div class="chain-node-name">丙烯</div><div class="chain-node-sub">PP原料</div></div>
+                    <span class="chain-arrow">→</span>
+                    <div class="chain-node bottle"><div class="chain-node-icon">💎</div><div class="chain-node-name">PP/PE粒子</div><div class="chain-node-sub">需关注</div></div>
+                    <span class="chain-arrow">→</span>
+                    <div class="chain-node"><div class="chain-node-icon">🔲</div><div class="chain-node-name">塑料件</div><div class="chain-node-sub">注塑成型</div></div>
+                    <span class="chain-arrow">→</span>
+                    <div class="chain-node"><div class="chain-node-icon">📱</div><div class="chain-node-name">小家电外壳</div><div class="chain-node-sub">XX企业/苏泊尔</div></div>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title"><div class="panel-icon">🔔</div><h3>相关预警</h3></div>
+                    <span class="panel-tag">3条</span>
+                </div>
+                <div class="alerts-grid">
+                    <div class="alert-card green"><div class="alert-card-title">🟢 供需基本平衡</div><div class="alert-card-desc">石化装置负荷率85%，供应稳定，社会库存处于中等水平</div><div class="alert-card-tags"><span class="alert-tag">供应</span><span class="alert-tag">平衡</span></div><div class="alert-action">→ 维持正常库存</div></div>
+                    <div class="alert-card yellow"><div class="alert-card-title">🟡 进口量增加</div><div class="alert-card-desc">海外PP价格下跌，进口资源涌入，压制国内价格上行空间</div><div class="alert-card-tags"><span class="alert-tag">进口</span><span class="alert-tag">压力</span></div><div class="alert-action">→ 观望为主</div></div>
+                    <div class="alert-card green"><div class="alert-card-title">🟢 成本相对稳定</div><div class="alert-card-desc">国际原油价格区间震荡，PP成本支撑力度一般，价格波动有限</div><div class="alert-card-tags"><span class="alert-tag">成本</span><span class="alert-tag">稳定</span></div><div class="alert-action">→ 锁定采购周期</div></div>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="panel-header"><div class="panel-title"><div class="panel-icon">💰</div><h3>对家电成本影响</h3></div></div>
+                <div class="impact-grid">
+                    <div class="impact-card"><div class="impact-icon">📱</div><div class="impact-product">小家电</div><div class="impact-range">占成本 8-15%</div><div class="impact-cost">±¥2/台</div></div>
+                    <div class="impact-card"><div class="impact-icon">🧺</div><div class="impact-product">洗衣机</div><div class="impact-range">占成本 10-12%</div><div class="impact-cost">±¥3/台</div></div>
+                    <div class="impact-card"><div class="impact-icon">📊</div><div class="impact-product">价格波动影响</div><div class="impact-range">±200元/吨波动</div><div class="impact-cost">±100万/万吨</div></div>
+                </div>
+            </div>
+            <footer class="footer"><p>© 2024 钧衍智研 OPC · 家电制造业大宗商品AI预测平台 · 数据仅供参考，不构成投资建议</p></footer>
+        </main>
+    </div>
+    <script>
+        function updateTime() { const now = new Date(); if(document.getElementById('curTime')) document.getElementById('curTime').textContent = now.toLocaleTimeString('zh-CN'); }
+        setInterval(updateTime, 1000); updateTime();
+        document.querySelectorAll('.time-tab').forEach(btn => { btn.addEventListener('click', () => { document.querySelectorAll('.time-tab').forEach(b => b.classList.remove('active')); btn.classList.add('active'); drawTrendChart(btn.dataset.t); }); });
+        function drawTrendChart(period) {
+            const c = document.getElementById('trendChart'), ctx = c.getContext('2d');
+            c.width = c.parentElement.offsetWidth; c.height = c.parentElement.offsetHeight;
+            const W = c.width, H = c.height, pad = 20;
+            ctx.clearRect(0, 0, W, H);
+            const pts = [], steps = period === '1W' ? 7 : period === '1M' ? 30 : 90;
+            for (let i = 0; i < steps; i++) pts.push({ x: pad + (i / (steps - 1)) * (W - pad * 2), y: H * 0.5 + Math.sin(i / 3) * 15 });
+            const grad = ctx.createLinearGradient(0, 0, 0, H);
+            grad.addColorStop(0, 'rgba(200, 150, 62, 0.15)'); grad.addColorStop(1, 'transparent');
+            ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y); pts.forEach(p => ctx.lineTo(p.x, p.y));
+            ctx.lineTo(W - pad, H - pad); ctx.lineTo(pad, H - pad); ctx.closePath();
+            ctx.fillStyle = grad; ctx.fill();
+            ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y); pts.forEach(p => ctx.lineTo(p.x, p.y));
+            ctx.strokeStyle = '#C8963E'; ctx.lineWidth = 2; ctx.stroke();
+        }
+        drawTrendChart('1M');
+        function drawHistoryChart() {
+            const c = document.getElementById('historyChart'), ctx = c.getContext('2d');
+            c.width = c.parentElement.offsetWidth; c.height = c.parentElement.offsetHeight;
+            const W = c.width, H = c.height, pad = { t: 20, r: 30, b: 40, l: 65 };
+            ctx.clearRect(0, 0, W, H);
+            const data = [], ma = [];
+            for (let i = 0; i < 180; i++) { data.push(8000 + Math.sin(i / 10) * 200 + (Math.random() - 0.5) * 100); }
+            for (let i = 0; i < data.length; i++) { const start = Math.max(0, i - 5); ma.push(data.slice(start, i + 1).reduce((a, b) => a + b, 0) / (i - start + 1)); }
+            const mn = Math.min(...data) * 0.995, mx = Math.max(...data) * 1.005;
+            const sY = v => pad.t + (H - pad.t - pad.b) - ((v - mn) / (mx - mn)) * (H - pad.t - pad.b);
+            const sX = i => pad.l + (i / (data.length - 1)) * (W - pad.l - pad.r);
+            ctx.strokeStyle = 'rgba(200,150,62,0.06)';
+            for (let i = 0; i <= 5; i++) { const y = pad.t + ((H - pad.t - pad.b) / 5) * i; ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y); ctx.stroke(); }
+            ctx.beginPath(); ma.forEach((v, i) => { if (i === 0) ctx.moveTo(sX(i), sY(v)); else ctx.lineTo(sX(i), sY(v)); });
+            ctx.strokeStyle = '#3A8BC7'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
+            ctx.beginPath(); data.forEach((v, i) => { if (i === 0) ctx.moveTo(sX(i), sY(v)); else ctx.lineTo(sX(i), sY(v)); });
+            ctx.strokeStyle = '#E8C56A'; ctx.lineWidth = 2; ctx.stroke();
+            ctx.lineTo(sX(data.length - 1), H - pad.b); ctx.lineTo(sX(0), H - pad.b); ctx.closePath();
+            const gG = ctx.createLinearGradient(0, pad.t, 0, H - pad.b);
+            gG.addColorStop(0, 'rgba(200,150,62,0.3)'); gG.addColorStop(1, 'transparent');
+            ctx.fillStyle = gG; ctx.fill();
+            ctx.fillStyle = '#556677'; ctx.font = '10px -apple-system'; ctx.textAlign = 'right';
+            for (let i = 0; i <= 5; i++) { const p = mn + ((mx - mn) / 5) * (5 - i); ctx.fillText(p.toFixed(0), pad.l - 8, pad.t + ((H - pad.t - pad.b) / 5) * i + 4); }
+            ctx.textAlign = 'center';
+            ['6月前', '5月前', '4月前', '3月前', '2月前', '1月前', '今天'].forEach((l, i) => ctx.fillText(l, pad.l + ((W - pad.l - pad.r) / 6) * i, H - pad.b + 20));
+        }
+        drawHistoryChart();
+        function drawPredictChart() {
+            const c = document.getElementById('predictChart'), ctx = c.getContext('2d');
+            c.width = c.parentElement.offsetWidth; c.height = c.parentElement.offsetHeight;
+            const W = c.width, H = c.height, pad = { t: 20, r: 30, b: 40, l: 65 };
+            ctx.clearRect(0, 0, W, H);
+            const actual = [], pred = [], up = [], low = [];
+            const st = 8100;
+            for (let i = 0; i < 90; i++) {
+                actual.push(st + Math.sin(i / 10) * 150 + (Math.random() - 0.5) * 80);
+                if (i >= 70) { const p = actual[i] + 50 + (i - 70) * 8 + Math.random() * 50; pred.push(p); up.push(p + 200); low.push(p - 200); }
+            }
+            for (let i = 0; i < 70; i++) { pred.unshift(null); up.unshift(null); low.unshift(null); }
+            const allVals = [...actual, ...pred.filter(v => v !== null), ...up.filter(v => v !== null), ...low.filter(v => v !== null)];
+            const mn = Math.min(...allVals) * 0.998, mx = Math.max(...allVals) * 1.002;
+            const sY = v => pad.t + (H - pad.t - pad.b) - ((v - mn) / (mx - mn)) * (H - pad.t - pad.b);
+            const sX = i => pad.l + (i / 89) * (W - pad.l - pad.r);
+            ctx.strokeStyle = 'rgba(200,150,62,0.06)';
+            for (let i = 0; i <= 5; i++) { const y = pad.t + ((H - pad.t - pad.b) / 5) * i; ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y); ctx.stroke(); }
+            const upPts = up.filter(v => v !== null).map((v, i) => ({ x: sX(70 + i), y: sY(v) }));
+            const lowPts = low.filter(v => v !== null).map((v, i) => ({ x: sX(70 + i), y: sY(v) })).reverse();
+            if (upPts.length > 0) { ctx.beginPath(); ctx.moveTo(upPts[0].x, upPts[0].y); upPts.forEach(p => ctx.lineTo(p.x, p.y)); lowPts.forEach(p => ctx.lineTo(p.x, p.y)); ctx.closePath(); ctx.fillStyle = 'rgba(27,77,122,0.12)'; ctx.fill(); }
+            const sp = 70;
+            ctx.beginPath(); ctx.setLineDash([4, 4]); ctx.moveTo(sX(sp), pad.t); ctx.lineTo(sX(sp), H - pad.b); ctx.strokeStyle = 'rgba(200,150,62,0.25)'; ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]);
+            const predPts = pred.filter(v => v !== null).map((v, i) => ({ x: sX(70 + i), y: sY(v) }));
+            if (predPts.length > 0) { ctx.beginPath(); ctx.moveTo(predPts[0].x, predPts[0].y); predPts.forEach(p => ctx.lineTo(p.x, p.y)); ctx.strokeStyle = '#3A8BC7'; ctx.lineWidth = 2; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]); }
+            ctx.beginPath(); actual.forEach((v, i) => { if (i === 0) ctx.moveTo(sX(i), sY(v)); else ctx.lineTo(sX(i), sY(v)); });
+            const gG = ctx.createLinearGradient(0, pad.t, 0, H - pad.b);
+            gG.addColorStop(0, '#E8C56A'); gG.addColorStop(1, '#C8963E');
+            ctx.strokeStyle = gG; ctx.lineWidth = 2.5; ctx.stroke();
+            ctx.fillStyle = '#556677'; ctx.font = '10px -apple-system'; ctx.textAlign = 'right';
+            for (let i = 0; i <= 5; i++) { const p = mn + ((mx - mn) / 5) * (5 - i); ctx.fillText(p.toFixed(0), pad.l - 8, pad.t + ((H - pad.t - pad.b) / 5) * i + 4); }
+            ctx.textAlign = 'center';
+            ['2月前', '1.5月前', '1月前', '今天', '1月后', '2月后', '3月后'].forEach((l, i) => ctx.fillText(l, pad.l + ((W - pad.l - pad.r) / 6) * i, H - pad.b + 20));
+        }
+        drawPredictChart();
+        window.addEventListener('resize', () => { drawTrendChart('1M'); drawHistoryChart(); drawPredictChart(); });
+    </script>
+</body>
+</html>
